@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+import logging
 from django.contrib.auth import get_user_model
 
 from .models import User
@@ -18,6 +19,9 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+# Configure module logger
+logger = logging.getLogger(__name__)
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -91,10 +95,25 @@ def user_login_view(request):
         
         try:
             # Get user by email
-            user = User.objects.get(email=email)
-            
-            # Authenticate user
-            user = authenticate(username=user.username, password=password)
+            try:
+                user = User.objects.get(email=email)
+                logger.debug("Login attempt for email=%s: user found (username=%s)", email, user.username)
+            except User.DoesNotExist:
+                logger.debug("Login attempt for email=%s: no user found", email)
+                return Response({
+                    'success': False,
+                    'message': 'No user found with this email'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Authenticate user (using username since we extend AbstractUser)
+            user_auth = authenticate(username=user.username, password=password)
+            if user_auth is None:
+                # Password incorrect or inactive — log check without revealing password
+                pwd_ok = user.check_password(password)
+                logger.debug("Password check for user %s: %s", user.username, pwd_ok)
+            else:
+                logger.debug("Authentication succeeded for user %s", user.username)
+            user = user_auth
             
             if user is not None:
                 if user.is_active:

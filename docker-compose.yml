@@ -30,15 +30,16 @@ services:
       - hirely_network
 
   frontend:
-    build: 
+    build:
       context: ./hirely-frontend
       dockerfile: Dockerfile
-    container_name: hirely_frontend
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+    volumes:
+      - ./hirely-frontend:/app
     ports:
       - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
     depends_on:
       - backend
     networks:

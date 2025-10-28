@@ -13,12 +13,13 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-load_dotenv()
+
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -96,8 +97,15 @@ WSGI_APPLICATION = 'HirelyBackend.wsgi.application'
 
 DATABASES = {
     'default': {
+        # 'ENGINE': 'django.db.backends.postgresql',
+        # 'NAME': os.environ.get('DB_NAME','hirely_db'),
+        # 'USER': os.environ.get('DB_USER', 'hirely_user'),
+        # 'PASSWORD': os.environ.get('DB_PASSWORD', 'hirely_password'),
+        # 'HOST': os.environ.get('DB_HOST','postgres'),
+        # 'PORT': os.environ.get('DB_PORT', default='5432'),
+
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME','hirely_db'),
+        'NAME': os.environ.get('DB_NAME','hirely'),
         'USER': os.environ.get('DB_USER', 'hirely_user'),
         'PASSWORD': os.environ.get('DB_PASSWORD', 'hirely_password'),
         'HOST': os.environ.get('DB_HOST','postgres'),
