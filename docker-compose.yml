@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: hirely_postgres
+    environment:  
+        POSTGRES_DB: hirely_db
+        POSTGRES_USER: hirely_user
+        POSTGRES_PASSWORD: 1122
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hirely_network
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hirely_backend
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+    networks:
+      - hirely_network
+
+  frontend:
+    build: 
+      context: ./hirely-frontend
+      dockerfile: Dockerfile
+    container_name: hirely_frontend
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - hirely_network
+
+volumes:
+  postgres_data:
+
+networks:
+  hirely_network:
+    driver: bridge
+
+
+
+
+    
