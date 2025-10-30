@@ -1,16 +1,22 @@
 from rest_framework import serializers
 from .models import Job
 
+# jobs/serializers.py
 class JobSerializer(serializers.ModelSerializer):
     employer_name = serializers.CharField(source='employer.username', read_only=True)
     date = serializers.SerializerMethodField()
     applicants_count = serializers.SerializerMethodField()
+    is_expired = serializers.ReadOnlyField()
     
     class Meta:
         model = Job
         fields = [
             'id', 'title', 'description', 'category', 'location', 
-            'level', 'salary', 'company', 'is_active', 'created_at',
+            'level', 'salary', 'salary_display', 'company', 'job_type',
+            'is_active', 'is_remote', 'is_featured', 'is_expired',
+            'responsibilities', 'requirements', 'skills',
+            'application_deadline', 'application_url',
+            'created_at', 'updated_at',
             'employer_name', 'date', 'applicants_count'
         ]
         read_only_fields = ['id', 'employer', 'created_at', 'updated_at']
@@ -19,15 +25,16 @@ class JobSerializer(serializers.ModelSerializer):
         return obj.created_at.strftime("%d %b. %Y")
     
     def get_applicants_count(self, obj):
-        # We'll update this later when we have applications
-        return 0
+        return 0  # Update when you have applications
 
 class JobCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = [
             'title', 'description', 'category', 'location', 
-            'level', 'salary', 'company'
+            'level', 'salary', 'salary_display', 'company', 'job_type',
+            'is_remote', 'responsibilities', 'requirements', 'skills',
+            'application_deadline', 'application_url'
         ]
     
     def validate_salary(self, value):
