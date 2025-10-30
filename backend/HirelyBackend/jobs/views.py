@@ -31,13 +31,51 @@ class JobListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         # For GET requests (listing jobs), show all active jobs to everyone
         if self.request.method == 'GET':
-            return Job.objects.filter(is_active=True)
+            queryset = Job.objects.filter(is_active=True)
+            
+            # Add filtering capabilities for public access
+            category = self.request.query_params.get('category')
+            location = self.request.query_params.get('location')
+            job_type = self.request.query_params.get('job_type')
+            level = self.request.query_params.get('level')
+            is_remote = self.request.query_params.get('is_remote')
+            
+            if category:
+                queryset = queryset.filter(category=category)
+            if location:
+                queryset = queryset.filter(location__icontains=location)
+            if job_type:
+                queryset = queryset.filter(job_type=job_type)
+            if level:
+                queryset = queryset.filter(level=level)
+            if is_remote:
+                queryset = queryset.filter(is_remote=True)
+                
+            return queryset.select_related('employer')
+        
         # For POST requests (creating jobs), only show employer's own jobs
         return Job.objects.filter(employer=self.request.user)
     
     def perform_create(self, serializer):
         # Only employers can create jobs
         serializer.save(employer=self.request.user)
+    
+    def list(self, request, *args, **kwargs):
+        """Override to add filtering metadata"""
+        response = super().list(request, *args, **kwargs)
+        
+        # Add available filters metadata
+        if request.method == 'GET':
+            # Get unique categories, locations, etc. for filter options
+            jobs = Job.objects.filter(is_active=True)
+            response.data['filters'] = {
+                'categories': list(jobs.values_list('category', flat=True).distinct()),
+                'locations': list(jobs.values_list('location', flat=True).distinct().order_by('location')),
+                'job_types': list(jobs.values_list('job_type', flat=True).distinct()),
+                'levels': list(jobs.values_list('level', flat=True).distinct()),
+            }
+        
+        return response
 
 class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
     # Allow anyone to view job details, but require employer auth to modify
@@ -50,6 +88,24 @@ class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Job.objects.filter(is_active=True)
         # For write requests, only allow access to employer's own jobs
         return Job.objects.filter(employer=self.request.user)
+    
+    def retrieve(self, request, *args, **kwargs):
+        """Get job details and related jobs"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        
+        # Add related jobs in the same category
+        related_jobs = Job.objects.filter(
+            is_active=True,
+            category=instance.category
+        ).exclude(id=instance.id)[:3]  # Get 3 related jobs
+        
+        related_serializer = JobSerializer(related_jobs, many=True)
+        
+        response_data = serializer.data
+        response_data['related_jobs'] = related_serializer.data
+        
+        return Response(response_data)
 
 class ToggleJobStatusView(generics.UpdateAPIView):
     # Only employers can toggle job status
@@ -67,15 +123,89 @@ class ToggleJobStatusView(generics.UpdateAPIView):
         serializer = self.get_serializer(job)
         return Response(serializer.data)
 
-# NEW: Public job listing view (optional - for more flexibility)
 class PublicJobListView(generics.ListAPIView):
-    permission_classes = [permissions.AllowAny]  # Completely public
+    permission_classes = [permissions.AllowAny]
     serializer_class = JobSerializer
     
     def get_queryset(self):
-        # Return only active jobs for public viewing
-        return Job.objects.filter(is_active=True)
+        queryset = Job.objects.filter(is_active=True)
+        
+        # Enhanced filtering for public endpoint
+        category = self.request.query_params.get('category')
+        location = self.request.query_params.get('location')
+        search = self.request.query_params.get('search')
+        job_type = self.request.query_params.get('type')
+        level = self.request.query_params.get('level')
+        is_remote = self.request.query_params.get('remote')
+        
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search) |
+                Q(company__icontains=search) |
+                Q(skills__icontains=search)
+            )
+        if category:
+            queryset = queryset.filter(category=category)
+        if location:
+            queryset = queryset.filter(location__icontains=location)
+        if job_type:
+            queryset = queryset.filter(job_type=job_type)
+        if level:
+            queryset = queryset.filter(level=level)
+        if is_remote:
+            queryset = queryset.filter(is_remote=True)
+            
+        return queryset.select_related('employer')
     
-    def get(self, request, *args, **kwargs):
-        # You can add additional public-specific logic here
-        return self.list(request, *args, **kwargs)
+    def list(self, request, *args, **kwargs):
+        """Add filter options to response"""
+        response = super().list(request, *args, **kwargs)
+        
+        # Add available filter options
+        jobs = Job.objects.filter(is_active=True)
+        response.data['filter_options'] = {
+            'categories': [
+                {'value': cat[0], 'label': cat[1], 'count': jobs.filter(category=cat[0]).count()}
+                for cat in Job.JOB_CATEGORIES
+            ],
+            'locations': [
+                {'value': loc, 'count': jobs.filter(location=loc).count()}
+                for loc in jobs.values_list('location', flat=True).distinct().order_by('location')
+            ],
+            'job_types': [
+                {'value': jt[0], 'label': jt[1], 'count': jobs.filter(job_type=jt[0]).count()}
+                for jt in Job.JOB_TYPES
+            ],
+            'levels': [
+                {'value': lvl[0], 'label': lvl[1], 'count': jobs.filter(level=lvl[0]).count()}
+                for lvl in Job.JOB_LEVELS
+            ],
+        }
+        
+        return response
+
+# NEW: Job Search View for more specific search functionality
+class JobSearchView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = JobSerializer
+    
+    def get_queryset(self):
+        queryset = Job.objects.filter(is_active=True)
+        
+        search_query = self.request.query_params.get('q')
+        location_query = self.request.query_params.get('location')
+        
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(company__icontains=search_query) |
+                Q(skills__icontains=search_query) |
+                Q(responsibilities__icontains=search_query)
+            )
+        
+        if location_query:
+            queryset = queryset.filter(location__icontains=location_query)
+            
+        return queryset.select_related('employer')
