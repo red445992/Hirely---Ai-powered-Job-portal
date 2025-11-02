@@ -56,7 +56,9 @@ INSTALLED_APPS = [
 
     #Local apps
     'accounts',
-    'jobs'
+    'jobs',
+    'applications',
+    'resumes',
 ]
 
 MIDDLEWARE = [
@@ -98,19 +100,19 @@ WSGI_APPLICATION = 'HirelyBackend.wsgi.application'
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': os.environ.get('DB_NAME','hirely_db'),
-        # 'USER': os.environ.get('DB_USER', 'hirely_user'),
-        # 'PASSWORD': os.environ.get('DB_PASSWORD', 'hirely_password'),
-        # 'HOST': os.environ.get('DB_HOST','postgres'),
-        # 'PORT': os.environ.get('DB_PORT', default='5432'),
-
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME','hirely'),
+        'NAME': os.environ.get('DB_NAME','hirely_db'),
         'USER': os.environ.get('DB_USER', 'hirely_user'),
         'PASSWORD': os.environ.get('DB_PASSWORD', 'hirely_password'),
         'HOST': os.environ.get('DB_HOST','postgres'),
         'PORT': os.environ.get('DB_PORT', default='5432'),
+
+        # 'ENGINE': 'django.db.backends.postgresql',
+        # 'NAME': os.environ.get('DB_NAME','hirely'),
+        # 'USER': os.environ.get('DB_USER', 'hirely_user'),
+        # 'PASSWORD': os.environ.get('DB_PASSWORD', 'hirely_password'),
+        # 'HOST': os.environ.get('DB_HOST','postgres'),
+        # 'PORT': os.environ.get('DB_PORT', default='5432'),
     }
 }
 
