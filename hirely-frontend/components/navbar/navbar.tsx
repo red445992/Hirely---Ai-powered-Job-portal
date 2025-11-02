@@ -41,8 +41,10 @@ export default function Navbar() {
         { href: "/jobs", label: "Jobs" },
         { href: "/applications", label: "Applications" },
         { href: "/resumes", label: "Resumes" },
+        { href: "/ai_interview", label: "AI Interview" }
       ];
     }
+
 
     // Non-authenticated users see regular nav
     return [
