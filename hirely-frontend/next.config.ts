@@ -1,12 +1,32 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
- output: 'standalone', // This creates a standalone build for production
+  // Build configurations
+  output: 'standalone',
   trailingSlash: true,
-  // Add if you have image domains
+  
+  // Updated image configuration
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.railway.app',
+        port: '',
+        pathname: '/**',
+      }
+    ],
   },
-};
+  
+  // Experimental features for build optimization
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+} satisfies NextConfig;
 
 export default nextConfig;
