@@ -18,7 +18,19 @@ from django.contrib import admin
 from django.urls import path,include    
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
+
+# Health check view for Railway
+def health_check(request):
+    return JsonResponse({
+        'status': 'healthy',
+        'service': 'Hirely Django Backend',
+        'version': '1.0.0'
+    })
+
 urlpatterns = [
+    path('', health_check, name='health_check'),  # Root health check
+    path('health/', health_check, name='health'),  # Alternative health endpoint
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('jobs/', include('jobs.urls')),
