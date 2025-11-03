@@ -25,12 +25,26 @@ load_dotenv()
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key-change-this-in-production')
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
+# Allow Railway hosts
+RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
+RAILWAY_STATIC_DOMAIN = os.environ.get('RAILWAY_STATIC_DOMAIN', '')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0','backend']
+ALLOWED_HOSTS = [
+    'localhost', 
+    '127.0.0.1', 
+    '0.0.0.0',
+    'backend',
+    '.railway.app',
+    RAILWAY_PUBLIC_DOMAIN,
+    RAILWAY_STATIC_DOMAIN,
+]
+
+# Remove empty strings from ALLOWED_HOSTS
+ALLOWED_HOSTS = [host for host in ALLOWED_HOSTS if host]
 
 
 # Application definition
@@ -98,23 +112,44 @@ WSGI_APPLICATION = 'HirelyBackend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME','hirely_db'),
-        'USER': os.environ.get('DB_USER', 'hirely_user'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'hirely_password'),
-        'HOST': os.environ.get('DB_HOST','postgres'),
-        'PORT': os.environ.get('DB_PORT', default='5432'),
-
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': os.environ.get('DB_NAME','hirely'),
-        # 'USER': os.environ.get('DB_USER', 'hirely_user'),
-        # 'PASSWORD': os.environ.get('DB_PASSWORD', 'hirely_password'),
-        # 'HOST': os.environ.get('DB_HOST','postgres'),
-        # 'PORT': os.environ.get('DB_PORT', default='5432'),
+# Railway Database Configuration (preferred)
+if os.environ.get('DATABASE_URL'):
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
     }
-}
+elif os.environ.get('PGDATABASE'):
+    # Alternative Railway PostgreSQL setup
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('PGDATABASE'),
+            'USER': os.environ.get('PGUSER'),
+            'PASSWORD': os.environ.get('PGPASSWORD'),
+            'HOST': os.environ.get('PGHOST'),
+            'PORT': os.environ.get('PGPORT', 5432),
+        }
+    }
+elif os.environ.get('RAILWAY_ENVIRONMENT'):
+    # Railway fallback - use SQLite temporarily
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    # Local development PostgreSQL
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME','hirely_db'),
+            'USER': os.environ.get('DB_USER', 'hirely_user'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'hirely_password'),
+            'HOST': os.environ.get('DB_HOST','postgres'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+        }
+    }
 
 
 # Password validation

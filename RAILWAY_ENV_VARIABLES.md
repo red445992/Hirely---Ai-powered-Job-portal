@@ -1,32 +1,47 @@
 # Required Environment Variables for Railway
 
-## In Railway Dashboard → Variables Tab, add these:
+## CRITICAL: Add these in Railway Dashboard → Variables Tab
 
-# Django Configuration
-SECRET_KEY=django-insecure-your-super-secret-key-here-change-this-in-production
-DJANGO_SETTINGS_MODULE=HirelyBackend.settings
+### Essential Variables (Required for app to start):
+```
 RAILWAY_ENVIRONMENT=production
+SECRET_KEY=django-insecure-your-super-secret-key-here-change-this
 DEBUG=False
+```
 
-# Google AI (Required for interview generation)
+### Google AI (Required for interview generation):
+```
 GOOGLE_API_KEY=your-actual-gemini-api-key-here
+```
 
-# Database (Railway will auto-set these when you add PostgreSQL)
-# DATABASE_URL=postgresql://username:password@host:port/database
-# PGDATABASE=railway
-# PGUSER=postgres
-# PGPASSWORD=auto-generated
-# PGHOST=containers-us-west-xxx.railway.app
-# PGPORT=5432
+### Database (Add PostgreSQL service in Railway):
+Railway will automatically set these when you add PostgreSQL:
+- DATABASE_URL
+- PGDATABASE  
+- PGUSER
+- PGPASSWORD
+- PGHOST
+- PGPORT
 
-## Instructions:
-1. Go to your Railway project dashboard
-2. Click on your service
-3. Go to "Variables" tab
-4. Add each variable above (except the PostgreSQL ones - those are auto-added)
-5. For SECRET_KEY, generate a new one or use Django's get_random_secret_key()
-6. For GOOGLE_API_KEY, use your actual Gemini API key
+## QUICK FIX STEPS:
 
-## After adding variables:
-1. Click "Deploy" to restart with new environment variables
-2. Check logs for any error messages
+1. **In Railway Dashboard:**
+   - Go to your project
+   - Click "Variables" tab
+   - Add the essential variables above
+
+2. **Add PostgreSQL Database:**
+   - Click "New" → "Database" → "PostgreSQL"
+   - Railway auto-configures database variables
+
+3. **Redeploy:**
+   - Push to GitHub or manually trigger deploy
+   - Health check should pass with these variables
+
+## Generate SECRET_KEY:
+```python
+from django.core.management.utils import get_random_secret_key
+print(get_random_secret_key())
+```
+
+The app now has fallbacks and should start even without perfect configuration!
