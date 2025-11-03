@@ -201,3 +201,23 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+.card-interview {
+  background: linear-gradient(to bottom, #1A1C20, #08090D);
+  border-radius: 1rem;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  gap: 2.5rem;
+  justify-content: space-between;
+}
+
+.card-interview .badge-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+    

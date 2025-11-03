@@ -166,7 +166,7 @@ export default function ResumesPage() {
       
       // Log FormData contents
       console.log('📋 FormData entries:');
-      for (let [key, value] of formData.entries()) {
+      for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
           console.log(`  ${key}:`, value.name, value.size, 'bytes');
         } else {
