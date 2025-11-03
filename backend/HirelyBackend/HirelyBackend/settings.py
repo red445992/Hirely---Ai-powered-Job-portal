@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -59,6 +58,7 @@ INSTALLED_APPS = [
     'jobs',
     'applications',
     'resumes',
+    'interviews',
 ]
 
 MIDDLEWARE = [
@@ -222,3 +222,73 @@ SIMPLE_JWT = {
 
     'JTI_CLAIM': 'jti',
 }
+
+# ======================================
+# PRODUCTION DEPLOYMENT SETTINGS
+# ======================================
+
+# Railway/Production Environment Detection
+if os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('RENDER'):
+    print("🚀 Production environment detected!")
+    
+    # Security Settings
+    DEBUG = False
+    
+    # Allowed Hosts for Production
+    ALLOWED_HOSTS = [
+        '.railway.app',
+        '.onrender.com',
+        'localhost',
+        '127.0.0.1',
+        os.environ.get('RAILWAY_PUBLIC_DOMAIN', ''),
+        os.environ.get('RENDER_EXTERNAL_HOSTNAME', ''),
+    ]
+    
+    # Production Database (Railway PostgreSQL)
+    if os.environ.get('DATABASE_URL'):
+        # For Railway
+        import dj_database_url
+        DATABASES = {
+            'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
+        }
+    elif os.environ.get('PGDATABASE'):
+        # Alternative Railway setup
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.environ.get('PGDATABASE'),
+                'USER': os.environ.get('PGUSER'),
+                'PASSWORD': os.environ.get('PGPASSWORD'),
+                'HOST': os.environ.get('PGHOST'),
+                'PORT': os.environ.get('PGPORT', 5432),
+            }
+        }
+    
+    # Static Files for Production
+    STATIC_URL = '/static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    
+    # CORS Settings for VAPI and Production
+    CORS_ALLOWED_ORIGINS = [
+        "https://vapi.ai",
+        "https://*.vapi.ai",
+        "https://your-frontend-domain.vercel.app",  # Update with your actual frontend URL
+        "http://localhost:3000",  # Keep for development testing
+        "https://localhost:3000",
+    ]
+    
+    # Allow VAPI to communicate
+    CORS_ALLOW_ALL_ORIGINS = True  # For VAPI integration
+    
+    # Security Headers
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    
+    # Trust Railway proxy
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+
+else:
+    print("🔧 Development environment active")
+    # Keep existing development settings
+    pass
