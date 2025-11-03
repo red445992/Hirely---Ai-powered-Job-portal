@@ -1,9 +1,12 @@
+"use client";
+
 import React from "react";
 import dayjs from "dayjs";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "../ui/button";
-import { getInterviewCover } from "@/lib/utils";
+import { getRandomInterviewCover } from "@/lib/utils";
+import DisplayTechIcons from "./DisplayTechIcons";
 // Define types for the component props
 interface InterviewCardProps {
   id: string;
@@ -34,7 +37,9 @@ const InterviewCard = ({
     Technical: "bg-green-100 text-green-800",
   }[normalizedType] || "bg-gray-100 text-gray-800";
 
-  const formattedDate = dayjs(createdAt || Date.now()).format("MMM D, YYYY");
+  // Use a default date if createdAt is not provided (for consistency)
+  const defaultDate = new Date('2024-01-01').getTime();
+  const formattedDate = dayjs(createdAt || defaultDate).format("MMM D, YYYY");
 
   // Simple random cover image function
   
@@ -50,7 +55,7 @@ const InterviewCard = ({
 
           {/* Cover Image */}
           <Image
-            src={getInterviewCover(id)}
+            src={getRandomInterviewCover(id)}
             alt="cover-image"
             width={90}
             height={90}
@@ -92,25 +97,8 @@ const InterviewCard = ({
         {/* Bottom Section */}
         <div className="flex flex-row justify-between items-center mt-6">
           {/* Tech Stack Icons (simplified for now) */}
-          <div className="flex flex-row gap-2">
-            {techstack.slice(0, 3).map((tech, index) => (
-              <div
-                key={index}
-                className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
-              >
-                <span className="text-xs font-medium text-gray-600">
-                  {tech.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            ))}
-            {techstack.length > 3 && (
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-xs font-medium text-gray-600">
-                  +{techstack.length - 3}
-                </span>
-              </div>
-            )}
-          </div>
+          
+          <DisplayTechIcons techStack={techstack} />
 
           {/* Action Button */}
           <Button className="bg-blue-600 hover:bg-blue-700 text-white">

@@ -15,8 +15,10 @@ export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
 
+  // Use a more appropriate pattern for hydration check
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleMenu = () => setOpen((prev) => !prev);

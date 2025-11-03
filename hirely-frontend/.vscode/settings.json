@@ -1,0 +1,16 @@
+{
+  "eslint.enable": false,
+  "eslint.workingDirectories": ["hirely-frontend"],
+  "eslint.validate": [],
+  "editor.codeActionsOnSave": {},
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "typescript.suggest.autoImports": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}

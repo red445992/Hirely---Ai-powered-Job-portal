@@ -85,7 +85,7 @@ export async function submitApplication(jobId: number, formData: any) {
 
     // Debug: Log all FormData entries
     console.log("🔍 FormData entries:");
-    for (let [key, value] of form.entries()) {
+    for (const [key, value] of form.entries()) {
       if (value instanceof File) {
         console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
       } else {
