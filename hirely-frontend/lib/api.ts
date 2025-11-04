@@ -273,3 +273,80 @@ export async function fetchApplicationStats() {
     throw error;
   }
 }
+
+// Applications API functions
+export async function fetchApplications() {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/applications/`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('access_token');
+        window.location.href = '/auth/login';
+        throw new Error('Session expired');
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : data.results || data.applications || [];
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    throw error;
+  }
+}
+
+export async function updateApplicationStatus(id: number, status: 'accepted' | 'rejected') {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/applications/${id}/`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('access_token');
+        window.location.href = '/auth/login';
+        throw new Error('Session expired');
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating application status:', error);
+    throw error;
+  }
+}
+
+export async function checkApiHealth() {
+  try {
+    const response = await fetch(`${API_BASE}/`, { 
+      method: 'HEAD',
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}

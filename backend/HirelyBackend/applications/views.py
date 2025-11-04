@@ -49,7 +49,7 @@ class ApplicationListView(generics.ListAPIView):
             queryset = Application.objects.all()
         else:
             # Employers can only see applications for their jobs
-            queryset = Application.objects.filter(job__created_by=user)
+            queryset = Application.objects.filter(job__employer=user)
         
         # Apply filters
         job_id = self.request.query_params.get('job', None)
@@ -82,7 +82,7 @@ class ApplicationDetailView(generics.RetrieveUpdateAPIView):
         if user.is_superuser:
             return Application.objects.all()
         else:
-            return Application.objects.filter(job__created_by=user)
+            return Application.objects.filter(job__employer=user)
     
     def get_serializer_class(self):
         if self.request.method == 'PATCH':
@@ -112,7 +112,7 @@ class JobApplicationsView(generics.ListAPIView):
         
         # Verify user owns this job or is admin
         job = get_object_or_404(Job, id=job_id)
-        if not user.is_superuser and job.created_by != user:
+        if not user.is_superuser and job.employer != user:
             return Application.objects.none()
         
         return Application.objects.filter(job_id=job_id).select_related('job')
@@ -141,7 +141,7 @@ def application_stats(request):
         queryset = Application.objects.all()
     elif user.user_type == 'employer':
         # Employers see stats for their jobs only
-        queryset = Application.objects.filter(job__created_by=user)
+        queryset = Application.objects.filter(job__employer=user)
     elif user.user_type == 'candidate':
         # Candidates see stats for their own applications (by user or email)
         queryset = Application.objects.filter(
@@ -188,7 +188,7 @@ def bulk_update_applications(request):
     else:
         applications = Application.objects.filter(
             id__in=application_ids,
-            job__created_by=user
+            job__employer=user
         )
     
     updated_count = 0
@@ -223,7 +223,7 @@ def delete_application(request, pk):
         if user.is_superuser:
             application = Application.objects.get(pk=pk)
         else:
-            application = Application.objects.get(pk=pk, job__created_by=user)
+            application = Application.objects.get(pk=pk, job__employer=user)
         
         application.delete()
         return Response({'message': 'Application deleted successfully'})

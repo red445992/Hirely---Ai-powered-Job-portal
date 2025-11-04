@@ -1,0 +1,194 @@
+{
+  "name": "InterviewGeneratorFlow",
+  "nodes": [
+    {
+      "name": "introduction",
+      "type": "conversation",
+      "isStart": true,
+      "metadata": {
+        "position": { "x": -300, "y": -320 }
+      },
+      "prompt": "Greet the user and explain that you will ask a few questions to generate the perfect interview.",
+      "variableExtractionPlan": { "output": [] },
+      "messagePlan": {
+        "firstMessage": "Hello! I’m your AI interviewer assistant. I’ll ask you a few quick questions to prepare your interview. Let’s get started!"
+      },
+      "toolIds": []
+    },
+    {
+      "name": "ask_level",
+      "type": "conversation",
+      "metadata": {
+        "position": { "x": -100, "y": 200 }
+      },
+      "prompt": "Ask for the user's desired experience level for the interview: junior, mid, or senior.",
+      "variableExtractionPlan": {
+        "output": [
+          {
+            "enum": ["junior", "mid", "senior"],
+            "type": "string",
+            "title": "level"
+          }
+        ]
+      },
+      "messagePlan": {
+        "firstMessage": "What experience level should the interview be for? Junior, mid, or senior?"
+      },
+      "toolIds": []
+    },
+    {
+      "name": "ask_amount",
+      "type": "conversation",
+      "metadata": {
+        "position": { "x": -100, "y": 600 }
+      },
+      "prompt": "Ask how many interview questions they want.",
+      "variableExtractionPlan": {
+        "output": [
+          { "type": "number", "title": "amount", "description": "Number of questions" }
+        ]
+      },
+      "messagePlan": {
+        "firstMessage": "Got it! How many questions would you like me to generate?"
+      },
+      "toolIds": []
+    },
+    {
+      "name": "ask_techstack",
+      "type": "conversation",
+      "metadata": {
+        "position": { "x": -100, "y": 1000 }
+      },
+      "prompt": "Ask which technologies or frameworks the interview should cover.",
+      "variableExtractionPlan": {
+        "output": [
+          { "type": "string", "title": "techstack", "description": "Technologies or frameworks" }
+        ]
+      },
+      "messagePlan": {
+        "firstMessage": "Which technologies or frameworks should the interview cover? For example, React, Node.js, or Next.js?"
+      },
+      "toolIds": []
+    },
+    {
+      "name": "ask_role",
+      "type": "conversation",
+      "metadata": {
+        "position": { "x": -100, "y": 1400 }
+      },
+      "prompt": "Ask which role the interview should focus on.",
+      "variableExtractionPlan": {
+        "output": [
+          { "type": "string", "title": "role", "description": "Role type" }
+        ]
+      },
+      "messagePlan": {
+        "firstMessage": "What role should this interview focus on? Frontend, backend, fullstack, or design?"
+      },
+      "toolIds": []
+    },
+    {
+      "name": "ask_type",
+      "type": "conversation",
+      "metadata": {
+        "position": { "x": -100, "y": 1800 }
+      },
+      "prompt": "Ask whether the interview should be technical, behavioral, or mixed.",
+      "variableExtractionPlan": {
+        "output": [
+          {
+            "enum": ["technical", "behavioral", "mixed"],
+            "type": "string",
+            "title": "type"
+          }
+        ]
+      },
+      "messagePlan": {
+        "firstMessage": "What type of interview would you like? Technical, behavioral, or mixed?"
+      },
+      "toolIds": []
+    },
+    {
+      "name": "confirmation",
+      "type": "conversation",
+      "metadata": {
+        "position": { "x": -100, "y": 2200 }
+      },
+      "prompt": "Confirm the collected details with the user before generating the questions.",
+      "variableExtractionPlan": {
+        "output": [
+          { "type": "boolean", "title": "confirmation" }
+        ]
+      },
+      "messagePlan": {
+        "firstMessage": "Just to confirm, you want a {{type}} interview for a {{role}} role at the {{level}} level, covering {{techstack}}, with {{amount}} questions. Is that correct?"
+      },
+      "toolIds": []
+    },
+    {
+      "name": "generate_api",
+      "type": "tool",
+      "metadata": {
+        "position": { "x": -100, "y": 2600 }
+      },
+      "tool": {
+        "type": "apiRequest",
+        "method": "POST",
+        "url": "https://web-production-babc4.up.railway.app/interviews/generate/",
+        "body": {
+          "type": "object",
+          "required": ["level", "amount", "techstack", "role", "type"],
+          "properties": {
+            "role": { "type": "string", "default": "{{role}}" },
+            "type": { "type": "string", "default": "{{type}}" },
+            "level": { "type": "string", "default": "{{level}}" },
+            "amount": { "type": "number", "default": "{{amount}}" },
+            "techstack": { "type": "string", "default": "{{techstack}}" }
+          }
+        },
+        "messages": [
+          {
+            "type": "request-start",
+            "content": "Thanks! I’m now generating your interview questions. Please hold on."
+          },
+          {
+            "role": "assistant",
+            "type": "request-complete",
+            "content": "Great! Your interview questions are ready. I’ll send them to you now."
+          },
+          {
+            "type": "request-failed",
+            "content": "Sorry, something went wrong while creating the questions. Let’s try again."
+          }
+        ]
+      }
+    },
+    {
+      "name": "hangup",
+      "type": "tool",
+      "metadata": {
+        "position": { "x": -100, "y": 3000 }
+      },
+      "tool": {
+        "type": "endCall",
+        "messages": [
+          {
+            "type": "request-start",
+            "content": "Thank you for your time! We’ll send you the questions shortly. Goodbye!"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    { "from": "introduction", "to": "ask_level", "condition": { "type": "always" } },
+    { "from": "ask_level", "to": "ask_amount", "condition": { "type": "ai", "prompt": "if user provided level" } },
+    { "from": "ask_amount", "to": "ask_techstack", "condition": { "type": "ai", "prompt": "if amount provided" } },
+    { "from": "ask_techstack", "to": "ask_role", "condition": { "type": "ai", "prompt": "if techstack provided" } },
+    { "from": "ask_role", "to": "ask_type", "condition": { "type": "ai", "prompt": "if role provided" } },
+    { "from": "ask_type", "to": "confirmation", "condition": { "type": "ai", "prompt": "if type provided" } },
+    { "from": "confirmation", "to": "generate_api", "condition": { "type": "ai", "prompt": "if user said yes" } },
+    { "from": "generate_api", "to": "hangup", "condition": { "type": "always" } }
+  ],
+  "globalPrompt": "You are a friendly voice assistant helping create AI interview questions. Speak clearly and conversationally. Never include symbols or special characters."
+}
