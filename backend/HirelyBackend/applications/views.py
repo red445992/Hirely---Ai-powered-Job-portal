@@ -9,6 +9,13 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import timedelta
 
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from jobs.utils.resume_scorer import analyze_resume
+from .models import Application
+
 from .models import Application, ApplicationStatusHistory
 from .serializers import (
     ApplicationCreateSerializer,
@@ -238,3 +245,35 @@ def delete_application(request, pk):
 # Import timezone and timedelta for stats view
 from django.utils import timezone
 from datetime import timedelta
+
+
+
+
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def resume_dashboard_view(request, job_id):
+    """Return ranked list of candidates for a given job ID."""
+    applications = Application.objects.filter(job_id=job_id).select_related("applicant", "job")
+
+    results = []
+    for app in applications:
+        # Skip applications without resumes or applicants
+        if not app.resume or not app.applicant:
+            continue
+        resume_path = app.resume.path
+        job_desc = app.job.description or ""
+        analysis = analyze_resume(resume_path, job_desc)
+
+        results.append({
+            "candidate": app.applicant.username,
+            "candidate_name": app.full_name,
+            "email": app.email,
+            "score": analysis["score"],
+            "parsed_data": analysis["parsed"]
+        })
+
+    # Sort by score descending
+    results = sorted(results, key=lambda x: x["score"], reverse=True)
+    return Response({"results": results})

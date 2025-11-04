@@ -1,0 +1,28 @@
+Emily Rodriguez
+Frontend Developer & UX Designer
+
+Email: emily.rodriguez@email.com
+Phone: (555) 456-7890
+
+EDUCATION
+Bachelor of Fine Arts in Digital Design
+Art Institute of California, 2019
+
+SKILLS
+- JavaScript, TypeScript, HTML5, CSS3
+- React, Vue.js, Angular, Next.js
+- Figma, Sketch, Adobe Creative Suite
+- Sass, Tailwind CSS, Bootstrap
+- Git, Webpack, Vite
+- User Research, Prototyping
+
+EXPERIENCE
+Senior Frontend Developer at Airbnb (2021-Present)
+- Designed and implemented responsive web interfaces
+- Collaborated with UX team to improve user experience
+- Reduced page load times by 45% through optimization
+
+Frontend Developer at Spotify (2019-2021)
+- Built interactive music player components using React
+- Implemented accessibility features following WCAG guidelines
+- Created design system components used across multiple teams

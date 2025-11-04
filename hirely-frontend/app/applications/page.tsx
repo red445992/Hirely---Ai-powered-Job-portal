@@ -49,22 +49,16 @@ const statusText = {
 
 export default function ApplicationsPage() {
   const router = useRouter();
-  const { isAuthenticated, user, token } = useAuth();
+  const { isAuthenticated, user, token, mounted } = useAuth();
   
   const [applications, setApplications] = useState<Application[]>([]);
   const [stats, setStats] = useState<ApplicationStats | null>(null);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false);
-
-  // Fix hydration mismatch by ensuring client-side only rendering
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   useEffect(() => {
-    if (!isClient) return;
+    if (!mounted) return;
     
     // If not authenticated, redirect to login
     if (!isAuthenticated) {
@@ -74,7 +68,7 @@ export default function ApplicationsPage() {
     
     // If authenticated, load data
     loadData();
-  }, [isAuthenticated, router, isClient]);
+  }, [isAuthenticated, router, mounted]);
 
   const loadData = async () => {
     if (!isAuthenticated || !token) {
@@ -126,7 +120,7 @@ export default function ApplicationsPage() {
   };
 
   // Show loading during SSR and initial client render
-  if (!isClient || loading) {
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

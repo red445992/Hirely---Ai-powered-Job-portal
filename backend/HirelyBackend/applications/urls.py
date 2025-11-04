@@ -20,4 +20,6 @@ urlpatterns = [
     # Statistics and bulk operations
     path('stats/', views.application_stats, name='stats'),
     path('bulk-update/', views.bulk_update_applications, name='bulk-update'),
+
+    path("resume-dashboard/<int:job_id>/", views.resume_dashboard_view, name="resume_dashboard"),
 ]

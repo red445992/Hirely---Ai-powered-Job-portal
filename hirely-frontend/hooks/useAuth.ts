@@ -28,36 +28,29 @@ function safeParse<T>(raw: string | null): T | null {
 export function useAuth() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
-  // Initialize from localStorage
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return safeParse<User>(localStorage.getItem("user"));
-    } catch {
-      return null;
-    }
-  });
+  // Initialize state to prevent hydration mismatches
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [token, setToken] = useState<string | null>(null);
 
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      const token = localStorage.getItem("token") || localStorage.getItem("access_token");
-      const u = safeParse<User>(localStorage.getItem("user"));
-      return Boolean(token && u);
-    } catch {
-      return false;
+  // Initialize from localStorage after component mounts
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedUser = safeParse<User>(localStorage.getItem("user"));
+        const storedToken = localStorage.getItem("token") || localStorage.getItem("access_token");
+        
+        setUser(storedUser);
+        setToken(storedToken);
+        setIsAuthenticated(Boolean(storedToken && storedUser));
+      } catch (error) {
+        console.error("Error reading from localStorage:", error);
+      }
     }
-  });
-
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return localStorage.getItem("token") || localStorage.getItem("access_token");
-    } catch {
-      return null;
-    }
-  });
+    setMounted(true);
+  }, []);
 
   const inFlight = useRef(false);
 
@@ -212,5 +205,6 @@ export function useAuth() {
     login,
     logout,
     isLoading,
+    mounted,
   };
 }

@@ -1,0 +1,30 @@
+Michael Chen
+Data Scientist & ML Engineer
+
+Email: michael.chen@email.com
+Phone: (555) 987-6543
+
+EDUCATION
+Master of Science in Machine Learning
+MIT, 2021
+Bachelor of Science in Mathematics
+UC Berkeley, 2019
+
+SKILLS
+- Python, R, SQL, Scala
+- TensorFlow, PyTorch, scikit-learn
+- Pandas, NumPy, Matplotlib
+- AWS, GCP, Azure
+- Docker, Kubernetes, MLOps
+- Git, Jupyter, Apache Spark
+
+EXPERIENCE
+Senior Data Scientist at Netflix (2022-Present)
+- Developed recommendation algorithms using deep learning
+- Improved user engagement by 25% through ML model optimization
+- Built end-to-end ML pipelines for production deployment
+
+Machine Learning Engineer at Uber (2021-2022)
+- Created predictive models for demand forecasting
+- Implemented A/B testing frameworks for ML experiments
+- Optimized model performance reducing inference time by 60%

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FolderKanban,BadgePlus,UserCheck  } from 'lucide-react';
+import { FolderKanban,BadgePlus,UserCheck, Brain  } from 'lucide-react';
 export default function EmployerSidebar() {
   const pathname = usePathname();
 
@@ -21,6 +21,11 @@ export default function EmployerSidebar() {
       href: "/dashboard/employer/applications",
       label: "View Applications", 
         icon: <UserCheck className="w-5 h-5" />
+    },
+    {
+      href: "/dashboard/employer/resume-scoring",
+      label: "AI Resume Analysis", 
+        icon: <Brain className="w-5 h-5" />
     },
   ];
 

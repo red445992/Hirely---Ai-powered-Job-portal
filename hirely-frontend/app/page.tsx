@@ -1,16 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function Home() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && isAuthenticated && user && !isLoading) {
       // Redirect candidates to jobs page instead of dashboard
       if (user.user_type === "candidate") {
         router.replace("/jobs");
@@ -18,7 +23,19 @@ export default function Home() {
         router.replace("/dashboard/employer");
       }
     }
-  }, [isAuthenticated, user, router]);
+  }, [mounted, isAuthenticated, user, isLoading, router]);
+
+  // Show loading during SSR and initial client hydration
+  if (!mounted || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show a simple landing page for non-authenticated users
   if (!isAuthenticated) {

@@ -4,6 +4,12 @@ from django.db.models import Q
 from .models import Job
 from .serializers import JobSerializer, JobCreateSerializer
 
+
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .utils.resume_parser import parse_resume
+
 class IsEmployer(permissions.BasePermission):
     def has_permission(self, request, view):
         # For safe methods (GET, HEAD, OPTIONS), allow anyone
@@ -209,3 +215,18 @@ class JobSearchView(generics.ListAPIView):
             queryset = queryset.filter(location__icontains=location_query)
             
         return queryset.select_related('employer')
+    
+@api_view(["POST"])
+def parse_resume_view(request):
+    """
+    Accepts a resume text or file and returns extracted entities.
+    """
+    resume_text = request.data.get("resume_text")
+    if not resume_text:
+        return Response({"error": "resume_text field is required"}, status=400)
+    
+    try:
+        result = parse_resume(resume_text)
+        return Response(result)  # Return the full result which includes entities, method, and status
+    except Exception as e:
+        return Response({"error": str(e), "status": "failed"}, status=500)

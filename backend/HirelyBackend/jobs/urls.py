@@ -10,4 +10,5 @@ urlpatterns = [
     # Public and search endpoints
     path('public/', views.PublicJobListView.as_view(), name='public-job-list'),
     path('search/', views.JobSearchView.as_view(), name='job-search'),
+    path('parse-resume/', views.parse_resume_view, name='parse_resume'),
 ]
