@@ -38,12 +38,13 @@ export default function Navbar() {
     }
 
     if (user?.user_type === "candidate") {
-      // Candidates see regular nav + Applications + Resumes
+      // Candidates see regular nav + Applications + Resumes + AI Interview + Pricing
       return [
         { href: "/jobs", label: "Jobs" },
         { href: "/applications", label: "Applications" },
         { href: "/resumes", label: "Resumes" },
-        { href: "/ai_interview", label: "AI Interview" }
+        { href: "/ai_interview", label: "AI Interview" },
+        { href: "/dashboard/candidate/pricing", label: "Pricing" }
       ];
     }
 
