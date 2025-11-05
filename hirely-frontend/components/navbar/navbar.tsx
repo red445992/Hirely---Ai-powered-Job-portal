@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import UserDropdown from "@/components/navbar/userdropdown";
+import { ModeToggle } from "@/components/toogle";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -44,7 +45,8 @@ export default function Navbar() {
         { href: "/applications", label: "Applications" },
         { href: "/resumes", label: "Resumes" },
         { href: "/ai_interview", label: "AI Interview" },
-        { href: "/dashboard/candidate/pricing", label: "Pricing" }
+        { href: "/dashboard/candidate/pricing", label: "Pricing" },
+        { href: "/sensai", label: "Sensai" }
       ];
     }
 
@@ -95,11 +97,13 @@ export default function Navbar() {
                   <span className="absolute -bottom-[14px] left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"></span>
                 )}
               </Link>
+              
             ))}
           </div>
 
           {/* Desktop Auth Section */}
           <div className="hidden md:flex items-center gap-4">
+            <ModeToggle />
             {mounted && isAuthenticated ? (
               <UserDropdown />
             ) : (
@@ -160,6 +164,11 @@ export default function Navbar() {
 
             {/* Auth Section */}
             <div className="flex flex-col gap-3 pt-4 mt-2 border-t border-neutral-200">
+              {/* Theme Toggle for Mobile */}
+              <div className="flex justify-center py-2">
+                <ModeToggle />
+              </div>
+              
               {mounted && isAuthenticated ? (
                 <>
                   {/* Mobile User Info */}

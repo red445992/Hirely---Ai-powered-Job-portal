@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import AppLayout from "./AppLayout";
 import Footer from "@/components/footer";
+import { ThemeProvider } from "@/components/theme-provider";
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -32,11 +33,20 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         {/* AppLayout handles conditional navbar rendering */}
+
+         <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            
         <AppLayout>
           <main role="main" aria-label="Main content">
             {children}
           </main>
         </AppLayout>
+          </ThemeProvider>
         
         <Toaster
           richColors
