@@ -16,7 +16,9 @@ import {
   MapPin,
   Award,
   Upload,
-  X
+  X,
+  CheckCircle,
+  ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -51,6 +53,7 @@ export default function ApplyJobs({ jobData, onClose, isModal = false }: ApplyJo
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resumeName, setResumeName] = useState("");
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   useEffect(() => {
     // Basic debug info on component mount
@@ -90,13 +93,37 @@ export default function ApplyJobs({ jobData, onClose, isModal = false }: ApplyJo
       console.log("Submitting application for job:", jobData.id);
       const result = await submitApplication(jobData.id, formData);
       
-      toast.success(`Application submitted successfully! ID: ${result.id}`, {
+      // Show success message
+      setShowSuccessMessage(true);
+      
+      toast.success(`Application submitted successfully!`, {
         style: { background: "linear-gradient(90deg, #4caf50, #388e3c)" },
+        duration: 5000,
       });
 
-      // Optional: Reset form or redirect
-      // setFormData({ ... }); // Reset form
-      // window.location.href = '/jobs'; // Redirect to jobs page
+      // Reset form after successful submission
+      setFormData({
+        fullName: "",
+        email: "",
+        phone: "",
+        resume: null,
+        coverLetter: "",
+        portfolioUrl: "",
+        linkedinUrl: "",
+        expectedSalary: "",
+        availability: "immediately",
+        additionalInfo: ""
+      });
+      setResumeName("");
+
+      // Redirect after showing success message for a moment
+      setTimeout(() => {
+        if (isModal && onClose) {
+          onClose(); // Close modal if in modal mode
+        } else {
+          // window.location.href = '/jobs'; // Redirect to jobs page
+        }
+      }, 3000);
       
     } catch (error) {
       console.error("Application submission failed:", error);
@@ -112,6 +139,7 @@ export default function ApplyJobs({ jobData, onClose, isModal = false }: ApplyJo
         } else if (error.message.includes('Network error')) {
           errorMessage = "Connection error. Please check your internet connection and try again.";
         }
+
       }
       toast.error(errorMessage, {
         style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
@@ -164,7 +192,64 @@ export default function ApplyJobs({ jobData, onClose, isModal = false }: ApplyJo
           </div>
         </div>
 
+        {/* Success Message */}
+        {showSuccessMessage && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-green-900">
+                  Application Submitted Successfully! 🎉
+                </h3>
+                <p className="text-green-700 mt-1">
+                  Your application for <strong>{jobData.title}</strong> at <strong>{jobData.company}</strong> has been submitted successfully.
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-white border border-green-200 rounded-md p-4 space-y-2">
+              <h4 className="font-medium text-green-900">What happens next?</h4>
+              <ul className="text-sm text-green-700 space-y-1">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>Your application is being reviewed by the hiring team</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>You'll receive an email confirmation shortly</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>The employer will contact you if your profile matches their requirements</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => window.location.href = '/jobs'}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors"
+              >
+                <span>Browse More Jobs</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              
+              {isModal && onClose && (
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 border border-green-300 text-green-700 hover:bg-green-50 font-medium rounded-md transition-colors"
+                >
+                  Close
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Application Form */}
+        {!showSuccessMessage && (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Personal Information */}
           <div className="space-y-4">
@@ -412,7 +497,7 @@ export default function ApplyJobs({ jobData, onClose, isModal = false }: ApplyJo
                   isSubmitting
                 });
               }}
-              className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:mask-b-to-purple-700 text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-8 py-3 bg-linear-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSubmitting ? "Submitting Application..." : "Submit Application"}
             </button>
@@ -432,6 +517,7 @@ export default function ApplyJobs({ jobData, onClose, isModal = false }: ApplyJo
             * Required fields. By submitting this application, you agree to our Privacy Policy and Terms of Service.
           </p>
         </form>
+        )}
       </div>
     </div>
   );

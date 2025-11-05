@@ -282,7 +282,7 @@ export default function AddJobs({ formData, isSubmitting, onFormChange, onSubmit
               name="salary"
               value={formData.salary}
               onChange={onFormChange}
-              placeholder="e.g., CTC 500+, $80,000 - $100,000"
+              placeholder="e.g., Rs. 80,000 - Rs. 100,000"
               required
               className="w-full px-4 py-2.5 border border-neutral-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />

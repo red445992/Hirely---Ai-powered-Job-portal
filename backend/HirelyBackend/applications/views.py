@@ -132,9 +132,18 @@ class ApplicationsByUserView(generics.ListAPIView):
     
     def get_queryset(self):
         user = self.request.user
-        return Application.objects.filter(
-            Q(applicant=user) | Q(email=user.email)
-        ).select_related('job')
+        print(f"🔍 DEBUG: User requesting applications: {user.username} (ID: {user.id}, Email: {user.email})")
+        
+        # Debug the query
+        query1 = Application.objects.filter(applicant=user)
+        query2 = Application.objects.filter(email=user.email)
+        query_combined = Application.objects.filter(Q(applicant=user) | Q(email=user.email))
+        
+        print(f"🔍 DEBUG: Applications by applicant: {query1.count()}")
+        print(f"🔍 DEBUG: Applications by email: {query2.count()}")
+        print(f"🔍 DEBUG: Combined query result: {query_combined.count()}")
+        
+        return query_combined.select_related('job')
 
 
 @api_view(['GET'])

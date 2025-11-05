@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import AddJobs from "./addjobs";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { CheckCircle, ArrowRight, Users, Briefcase, TrendingUp } from "lucide-react";
 
 interface JobFormData {
   title: string;
@@ -39,6 +40,8 @@ export default function AddJobPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [createdJob, setCreatedJob] = useState<any>(null);
   const { user, token, refreshAccess } = useAuth();
 
   // Debug: Check what's in auth
@@ -116,8 +119,8 @@ export default function AddJobPage() {
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
       ).replace(/[\/;\s]+$/g, "");
       
-      // Updated URL to match backend
-      const url = `${apiBase}/jobs/`; // Changed from '/jobs/addjobs/'
+      // Fixed URL to match backend endpoint
+      const url = `${apiBase}/jobs/addjobs/`;
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -182,37 +185,55 @@ export default function AddJobPage() {
       }
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("API Error:", errorData);
+        let errorMessage = `Failed to create job (${response.status})`;
         
-        // Handle field validation errors
-        if (errorData.detail) {
-          toast.error(`Failed to create job: ${errorData.detail}`, {
-            style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
-          });
-        } else if (typeof errorData === 'object') {
-          // Handle field-level errors
-          const fieldErrors = Object.entries(errorData)
-            .map(([field, errors]) => `${field}: ${(errors as string[]).join(', ')}`)
-            .join('; ');
-          toast.error(`Validation errors: ${fieldErrors}`, {
-            style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
-          });
-        } else {
-          toast.error("Failed to create job. Please check all fields.", {
-            style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
-          });
+        try {
+          const errorData = await response.json();
+          console.error("API Error:", errorData);
+          
+          // Handle field validation errors
+          if (errorData.detail) {
+            errorMessage = `Failed to create job: ${errorData.detail}`;
+          } else if (typeof errorData === 'object') {
+            // Handle field-level errors
+            const fieldErrors = Object.entries(errorData)
+              .map(([field, errors]) => `${field}: ${(errors as string[]).join(', ')}`)
+              .join('; ');
+            errorMessage = `Validation errors: ${fieldErrors}`;
+          }
+        } catch (parseError) {
+          // Response is not JSON (probably HTML error page)
+          const errorText = await response.text();
+          console.error("Non-JSON error response:", errorText);
+          
+          if (response.status === 404) {
+            errorMessage = "Job creation endpoint not found. Please check the backend URL configuration.";
+          } else {
+            errorMessage = `Server error (${response.status}). Please try again.`;
+          }
         }
+        
+        toast.error(errorMessage, {
+          style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+        });
         return;
       }
 
       const data = await response.json();
+      
+      // Store created job data and show success message
+      setCreatedJob(data);
+      setShowSuccessMessage(true);
+      
       toast.success("Job posted successfully!", {
         style: { background: "linear-gradient(90deg, #22c55e, #16a34a)" },
       });
       console.log("Job posted successfully:", data);
 
-      resetForm();
+      // Reset form after a delay to show success message
+      setTimeout(() => {
+        resetForm();
+      }, 100);
     } catch (error) {
       console.error("Network error posting job:", error);
       toast.error(
@@ -247,12 +268,80 @@ export default function AddJobPage() {
   return (
     <div className="min-h-screen bg-neutral-50 p-6">
       <div className="max-w-3xl mx-auto">
-        <AddJobs
-          formData={formData}
-          isSubmitting={isSubmitting}
-          onFormChange={handleFormChange}
-          onSubmit={handleSubmit}
-        />
+        {/* Success Message */}
+        {showSuccessMessage && createdJob && (
+          <div className="mb-8 bg-green-50 border border-green-200 rounded-lg p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-green-900">
+                  Job Posted Successfully! 🎉
+                </h3>
+                <p className="text-green-700 mt-1">
+                  Your job posting for <strong>{createdJob.title}</strong> at <strong>{createdJob.company}</strong> has been published successfully and is now live for candidates to apply.
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-white border border-green-200 rounded-md p-4 space-y-2">
+              <h4 className="font-medium text-green-900">What happens next?</h4>
+              <ul className="text-sm text-green-700 space-y-1">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>Your job is now visible to qualified candidates</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>You'll receive email notifications when candidates apply</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>Track applications and candidates in your employer dashboard</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => window.location.href = '/dashboard/employer/applications'}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors"
+              >
+                <Users className="w-4 h-4" />
+                <span>View Applications</span>
+              </button>
+              
+              <button
+                onClick={() => window.location.href = '/dashboard/employer'}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-green-300 text-green-700 hover:bg-green-50 font-medium rounded-md transition-colors"
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span>Dashboard</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowSuccessMessage(false);
+                  setCreatedJob(null);
+                }}
+                className="px-4 py-2 border border-green-300 text-green-700 hover:bg-green-50 font-medium rounded-md transition-colors"
+              >
+                Post Another Job
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Hide form when success message is shown */}
+        {!showSuccessMessage && (
+          <AddJobs
+            formData={formData}
+            isSubmitting={isSubmitting}
+            onFormChange={handleFormChange}
+            onSubmit={handleSubmit}
+          />
+        )}
       </div>
     </div>
   );

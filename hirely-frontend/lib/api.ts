@@ -115,21 +115,35 @@ export async function submitApplication(jobId: number, formData: any) {
       try {
         const errorJson = JSON.parse(errorData);
         console.error("❌ Parsed error JSON:", errorJson);
-        // throw new Error(`Application submission failed: ${JSON.stringify(errorJson)}`);
-        toast.error(
-          `Application submission failed: ${
-            errorJson.detail || "Unknown error"
-          }`,
-          {
-            style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
-          }
-        );
+        
+        // Create user-friendly error message
+        let errorMessage = "Application submission failed";
+        if (errorJson.email && errorJson.email.includes("already applied")) {
+          errorMessage = "You have already applied for this job";
+        } else if (errorJson.detail) {
+          errorMessage = errorJson.detail;
+        } else if (typeof errorJson === 'object') {
+          // Handle field-specific errors
+          const fieldErrors = Object.entries(errorJson).map(([field, errors]) => {
+            if (Array.isArray(errors)) {
+              return `${field}: ${errors.join(', ')}`;
+            }
+            return `${field}: ${errors}`;
+          }).join('; ');
+          errorMessage = fieldErrors || errorMessage;
+        }
+        
+        toast.error(errorMessage, {
+          style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+        });
       } catch (parseError) {
-        // throw new Error(`Application submission failed (${response.status}): ${errorData}`);
         toast.error(`Application submission failed: ${errorData}`, {
           style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
         });
       }
+      
+      // Throw error to stop execution - don't try to read response again
+      throw new Error("Application submission failed");
     }
 
     const result = await response.json();
