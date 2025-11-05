@@ -11,8 +11,8 @@ interface Application {
   job_title: string;
   job_company: string;
   job_location: string;
-  resume: string;
-  resume_filename: string;
+  resume: string | null;
+  resume_filename: string | null;
   expected_salary: string;
   status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
   applied_at: string;
@@ -24,7 +24,7 @@ interface ApplicationsTableProps {
   applications: Application[];
   onAccept: (id: number) => void;
   onReject: (id: number) => void;
-  onDownloadResume: (url: string, fileName: string) => void;
+  onDownloadResume: (url: string | null, fileName: string | null) => void;
 }
 
 export default function ApplicationsTable({
@@ -145,13 +145,17 @@ export default function ApplicationsTable({
                   
                   {/* Resume */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => onDownloadResume(app.resume, app.resume_filename || `${app.full_name}_resume`)}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 text-sm font-medium rounded-md hover:bg-blue-100 transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download
-                    </button>
+                    {app.resume ? (
+                      <button
+                        onClick={() => onDownloadResume(app.resume, app.resume_filename || `${app.full_name}_resume`)}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 text-sm font-medium rounded-md hover:bg-blue-100 transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download
+                      </button>
+                    ) : (
+                      <span className="text-gray-400 text-sm">No resume</span>
+                    )}
                   </td>
                   {/* Actions */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
@@ -195,15 +199,17 @@ export default function ApplicationsTable({
                                 </button>
                               </>
                             )}
-                            <button
-                              onClick={() => {
-                                onDownloadResume(app.resume, app.resume_filename || `${app.full_name}_resume`);
-                                setOpenMenuId(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 transition-colors"
-                            >
-                              📄 Resume
-                            </button>
+                            {app.resume && (
+                              <button
+                                onClick={() => {
+                                  onDownloadResume(app.resume, app.resume_filename || `${app.full_name}_resume`);
+                                  setOpenMenuId(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 transition-colors"
+                              >
+                                📄 Resume
+                              </button>
+                            )}
                           </div>
                         </>
                       )}
