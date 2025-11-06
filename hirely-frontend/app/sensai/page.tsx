@@ -59,7 +59,7 @@ const page = async() => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-              <Link href="/dashboard/candidate/pricing">
+              <Link href="./onboarding/">
                 <Button
                   size="lg"
                   className="px-8 py-3 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg transition-all duration-300 transform hover:scale-105"
@@ -345,7 +345,7 @@ const page = async() => {
               Join thousands of professionals who are advancing their careers
               with AI-powered guidance.
             </p>
-            <Link href="/dashboard" passHref>
+            <Link href="/sensai/dashboard" passHref>
               <Button
                 size="lg"
                 variant="secondary"
