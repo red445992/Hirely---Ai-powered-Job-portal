@@ -28,29 +28,14 @@ export async function updateUser(data: UpdateUserData) {
       };
     }
 
-    // Find or create IndustryInsight for the selected industry
-    let industryInsight = null;
+    // Check if an IndustryInsight already exists for the selected industry
+    // Don't create it here - let the dashboard generate it with AI
+    let industryInsightId = null;
     if (data.industry) {
-      industryInsight = await db.industryInsight.findUnique({
+      const existingInsight = await db.industryInsight.findUnique({
         where: { industry: data.industry },
       });
-
-      // If industry insight doesn't exist, create a placeholder
-      if (!industryInsight) {
-        industryInsight = await db.industryInsight.create({
-          data: {
-            industry: data.industry,
-            salaryRanges: [],
-            growthRate: 0,
-            demandLevel: "Unknown",
-            topSkills: [],
-            marketOutlook: "Data not available yet",
-            keyTrends: [],
-            recommendedSkills: [],
-            nextUpdate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          },
-        });
-      }
+      industryInsightId = existingInsight?.id || null;
     }
 
     // Check if user profile exists
@@ -65,7 +50,7 @@ export async function updateUser(data: UpdateUserData) {
           userId: user.id,
           userEmail: user.email,
           industry: data.industry,
-          industryInsightId: industryInsight?.id,
+          industryInsightId: industryInsightId, // Fixed: was industryInsight?.id
           experience: data.experience || null,
           bio: data.bio || null,
           skills: data.skills || [],
@@ -85,7 +70,7 @@ export async function updateUser(data: UpdateUserData) {
       where: { userId: user.id },
       data: {
         industry: data.industry,
-        industryInsightId: industryInsight?.id,
+        industryInsightId: industryInsightId, // Fixed: was industryInsight?.id
         experience: data.experience,
         bio: data.bio,
         skills: data.skills || [],
@@ -157,5 +142,37 @@ export async function getUserProfile() {
   } catch (error) {
     console.error("Error fetching user profile:", error);
     throw new Error("Failed to fetch profile");
+  }
+}
+
+/**
+ * Reset user onboarding (for testing purposes)
+ * This clears the industry field so user can re-onboard
+ */
+export async function resetOnboarding() {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    // Just clear the industry field, keep other data
+    await db.userProfile.update({
+      where: { userId: user.id },
+      data: {
+        industry: null,
+        industryInsightId: null, // Unlink from insight
+      },
+    });
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Error resetting onboarding:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to reset onboarding",
+    };
   }
 }
