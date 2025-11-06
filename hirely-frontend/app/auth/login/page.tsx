@@ -133,6 +133,21 @@ export default function LoginPage() {
         localStorage.setItem("refresh_token", response.tokens.refresh);
         localStorage.setItem("user", JSON.stringify(response.user));
 
+        // Also set server-side cookies for server actions
+        try {
+          await fetch("/api/auth/set-cookies", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              token: response.tokens.access,
+              user: response.user,
+            }),
+          });
+        } catch (cookieError) {
+          console.warn("⚠️ Failed to set server cookies:", cookieError);
+          // Don't block login if cookie setting fails
+        }
+
         console.log("✅ Login successful, user role:", response.user.user_type);
 
         // Step 3: Role-based routing

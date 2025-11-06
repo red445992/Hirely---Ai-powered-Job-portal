@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+
+}
+model Assessment {
+  id            String    @id @default(cuid())
+  userId        Int       // Reference to Django User.id
+  userEmail     String    
+  quizScore     Float     
+  questions     Json[]    
+  category      String    
+  improvementTip String?  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([userEmail])
+}
+
+model Resume {
+  id            String    @id @default(cuid())
+  userId        Int       // Reference to Django User.id
+  userEmail     String    
+  content       String    @db.Text 
+  atsScore      Float?
+  feedback      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([userEmail])
+}
+
+model CoverLetter {
+  id              String    @id @default(cuid())
+  userId          Int       // Reference to Django User.id
+  userEmail       String
+  content         String    
+  jobDescription  String?
+  companyName     String    
+  jobTitle        String    
+  status          String    @default("draft")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([userEmail])
+}
+
+model IndustryInsight {
+  id            String    @id @default(cuid())
+  industry      String    @unique  
+  
+  salaryRanges  Json[]    
+  
+
+  growthRate    Float     
+  demandLevel   String    
+  topSkills     String[]  
+  
+  marketOutlook String    
+  keyTrends     String[]  
+  
+  recommendedSkills String[]  
+  
+  lastUpdated   DateTime  @default(now())
+  nextUpdate    DateTime  
+
+  // Relation: Users who selected this industry
+  userProfiles  UserProfile[]
+
+  @@index([industry])
+}
+
+// New: Store user industry preferences without duplicating user data
+model UserProfile {
+  id            String    @id @default(cuid())
+  userId        Int       @unique // Reference to Django User.id
+  userEmail     String    @unique
+  industry      String?   
+  industryInsightId String?  // Foreign key to IndustryInsight
+  bio           String?
+  experience    Int?      
+  skills        String[]  
+  preferences   Json?     // Store SensAI-specific preferences
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relation: Link to industry insights
+  industryInsight IndustryInsight? @relation(fields: [industryInsightId], references: [id])
+
+  @@index([userId])
+  @@index([industry])
+  @@index([industryInsightId])
+}
+
+// Store user career goals and tracking
+model CareerGoal {
+  id            String    @id @default(cuid())
+  userId        Int       // Reference to Django User.id
+  userEmail     String
+  title         String
+  description   String?
+  targetDate    DateTime?
+  status        String    @default("active") // active, completed, paused
+  progress      Int       @default(0) // 0-100
+  milestones    Json[]    // Array of milestone objects
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([userEmail])
+}
+
+// Store AI interview session data
+model InterviewSession {
+  id            String    @id @default(cuid())
+  userId        Int       // Reference to Django User.id
+  userEmail     String
+  jobTitle      String
+  companyName   String?
+  questions     Json[]    // Array of question objects
+  answers       Json[]    // Array of answer objects
+  feedback      Json?     // AI feedback object
+  score         Float?    // Overall performance score
+  duration      Int?      // Session duration in minutes
+  status        String    @default("completed") // scheduled, in-progress, completed
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([userEmail])
+}

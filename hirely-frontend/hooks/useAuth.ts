@@ -140,13 +140,28 @@ export function useAuth() {
    * Login: Store user data and token
    * Now handles both Token and JWT authentication
    */
-  const login = useCallback((userData: User, authToken: string, refreshToken?: string) => {
+  const login = useCallback(async (userData: User, authToken: string, refreshToken?: string) => {
     // Store token as "token" for Django Token auth compatibility
     localStorage.setItem("token", authToken);
     localStorage.setItem("user", JSON.stringify(userData));
     
     if (refreshToken) {
       localStorage.setItem("refresh_token", refreshToken);
+    }
+
+    // Also set server-side cookies for server actions
+    try {
+      await fetch("/api/auth/set-cookies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: authToken,
+          user: userData,
+        }),
+      });
+    } catch (cookieError) {
+      console.warn("⚠️ Failed to set server cookies:", cookieError);
+      // Don't block login if cookie setting fails
     }
 
     setUser(userData);
@@ -163,6 +178,15 @@ export function useAuth() {
     setIsLoading(true);
 
     try {
+      // Clear server-side cookies
+      try {
+        await fetch("/api/auth/clear-cookies", {
+          method: "POST",
+        });
+      } catch (cookieError) {
+        console.warn("⚠️ Failed to clear server cookies:", cookieError);
+      }
+
       // Clear all auth-related items
       localStorage.removeItem("token");
       localStorage.removeItem("access_token");

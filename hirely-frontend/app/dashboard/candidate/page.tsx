@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button"; // shadcn/ui
+import SensAIUserExample from "@/components/SensAIUserExample";
 // If you don't have it yet: `npx shadcn@latest add button`
 
 interface User {
@@ -122,6 +123,12 @@ const CandidatePage = () => {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* SensAI User Test Component */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">SensAI Integration Test</h3>
+            <SensAIUserExample />
           </div>
         </div>
       </main>

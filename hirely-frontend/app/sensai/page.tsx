@@ -1,4 +1,5 @@
 import React from "react";
+import { checkUser } from "@/lib/user";
 import {
   ChevronDown,
   FileText,
@@ -33,7 +34,8 @@ import { features } from "@/data/features";
 import { testimonial } from "@/data/testimonial";
 import { faqs } from "@/data/faqs";
 import { howItWorks } from "@/data/howItWorks";
-const page = () => {
+const page = async() => {
+  await checkUser(); // Ensure user is checked before rendering
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50" suppressHydrationWarning>
       {/* Hero Section */}
@@ -347,7 +349,7 @@ const page = () => {
               <Button
                 size="lg"
                 variant="secondary"
-                className="h-11 mt-5 animate-bounce"
+                className="h-11 mt-5 animate-bounce bg-amber-300"
               >
                 Start Your Journey Today <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

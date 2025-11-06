@@ -1,8 +1,0 @@
-{
-  "buildCommand": "cd hirely-frontend && npm run build",
-  "outputDirectory": "hirely-frontend/.next",
-  "framework": "nextjs",
-  "installCommand": "cd hirely-frontend && npm install",
-  "devCommand": "cd hirely-frontend && npm run dev",
-  "rootDirectory": "hirely-frontend"
-}
