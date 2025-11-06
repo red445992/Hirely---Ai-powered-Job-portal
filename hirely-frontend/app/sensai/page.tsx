@@ -86,7 +86,7 @@ const page = async() => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link
-                      href="/resume"
+                      href="/sensai/resume"
                       className="flex items-center gap-3 p-3 hover:bg-blue-50"
                     >
                       <FileText className="h-4 w-4 text-blue-600" />
@@ -95,7 +95,7 @@ const page = async() => {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link
-                      href="/ai-cover-letter"
+                      href="/sensai/ai-cover-letter"
                       className="flex items-center gap-3 p-3 hover:bg-purple-50"
                     >
                       <PenBox className="h-4 w-4 text-purple-600" />
@@ -104,7 +104,7 @@ const page = async() => {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link
-                      href="/interview"
+                      href="/sensai/interview"
                       className="flex items-center gap-3 p-3 hover:bg-green-50"
                     >
                       <GraduationCap className="h-4 w-4 text-green-600" />
