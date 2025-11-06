@@ -4,6 +4,9 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CoverLetterList from "./_components/cover-letter-list";
 
+// Make this page dynamic since it uses cookies for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function CoverLetterPage() {
   const coverLetters = await getCoverLetters();
 

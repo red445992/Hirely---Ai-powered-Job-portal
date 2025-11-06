@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -20,6 +20,8 @@ import {
   Target,
   MessageSquare,
   ClipboardCheck,
+  RefreshCw,
+  ArrowLeft,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -31,6 +33,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // Define types based on our Prisma schema
 type SalaryRange = {
@@ -98,6 +103,34 @@ interface DashboardViewProps {
 }
 
 const DashboardView = ({ insights, stats, recentActivities }: DashboardViewProps) => {
+  const router = useRouter();
+  const [isResetting, setIsResetting] = useState(false);
+
+  // Handle reset onboarding
+  const handleChangeIndustry = async () => {
+    setIsResetting(true);
+    try {
+      const response = await fetch("/api/reset-onboarding", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Redirecting to onboarding...");
+        router.push("/sensai/onboarding");
+        router.refresh();
+      } else {
+        toast.error(data.error || "Failed to reset onboarding");
+      }
+    } catch (error) {
+      console.error("Error resetting onboarding:", error);
+      toast.error("Failed to reset onboarding. Please try again.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   // Transform salary data for the chart
   const salaryData = insights.salaryRanges.map((range) => ({
     name: range.role,
@@ -144,6 +177,19 @@ const DashboardView = ({ insights, stats, recentActivities }: DashboardViewProps
 
   return (
     <div className="space-y-6">
+      {/* Back to Home Button */}
+      <div className="flex justify-start">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/sensai")}
+          className="gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to SensAI Home
+        </Button>
+      </div>
+
       {/* User Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
@@ -221,7 +267,19 @@ const DashboardView = ({ insights, stats, recentActivities }: DashboardViewProps
               AI-powered insights for {insights.industry}
             </p>
           </div>
-          <Badge variant="outline">Last updated: {format(new Date(insights.lastUpdated), "MMM dd, yyyy")}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">Last updated: {format(new Date(insights.lastUpdated), "MMM dd, yyyy")}</Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleChangeIndustry}
+              disabled={isResetting}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isResetting ? 'animate-spin' : ''}`} />
+              Change Industry
+            </Button>
+          </div>
         </div>
       </div>
 

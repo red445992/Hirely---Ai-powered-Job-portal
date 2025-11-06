@@ -3,6 +3,41 @@
 import { db } from "@/lib/prisma";
 import getCurrentUser from "./getCurrentUser";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Prisma } from "@prisma/client";
+
+// Type definitions
+type SalaryRange = {
+  role: string;
+  min: number;
+  max: number;
+  median: number;
+  location: string;
+};
+
+type IndustryInsightWithTypedData = {
+  id: string;
+  industry: string;
+  salaryRanges: SalaryRange[];
+  growthRate: number;
+  demandLevel: string;
+  topSkills: string[];
+  marketOutlook: string;
+  keyTrends: string[];
+  recommendedSkills: string[];
+  lastUpdated: Date;
+  nextUpdate: Date;
+};
+
+// Helper function to transform JsonValue[] to typed array
+function transformInsightData(insight: any): IndustryInsightWithTypedData {
+  return {
+    ...insight,
+    salaryRanges: insight.salaryRanges as SalaryRange[],
+    topSkills: insight.topSkills as string[],
+    keyTrends: insight.keyTrends as string[],
+    recommendedSkills: insight.recommendedSkills as string[],
+  };
+}
 
 // Debug: Check if API key is loaded
 const apiKey = process.env.GOOGLE_GENERATIVE_API_KEY;
@@ -126,7 +161,7 @@ export async function getIndustryInsights() {
             where: { userId: user.id },
             data: { industryInsightId: newIndustryInsight.id },
           });
-          return newIndustryInsight;
+          return transformInsightData(newIndustryInsight);
         }
         
         // If no insight exists for new industry, generate it
@@ -166,7 +201,7 @@ export async function getIndustryInsights() {
         });
         
         console.log("✅ New industry insight created and linked");
-        return newInsight;
+        return transformInsightData(newInsight);
       }
       
       console.log(`📅 Last updated: ${userProfile.industryInsight.lastUpdated}`);
@@ -193,11 +228,11 @@ export async function getIndustryInsights() {
         });
 
         console.log("✅ Industry insights updated successfully");
-        return updatedInsight;
+        return transformInsightData(updatedInsight);
       }
       
       console.log("✅ Returning cached industry insights (still fresh)");
-      return userProfile.industryInsight;
+      return transformInsightData(userProfile.industryInsight);
     }
 
     // Check if an insight already exists for this industry (shared across users)
@@ -215,7 +250,7 @@ export async function getIndustryInsights() {
       });
 
       console.log("✅ User linked to existing industry insight");
-      return existingInsight;
+      return transformInsightData(existingInsight);
     }
 
     // If no insights exist at all, generate them
@@ -260,7 +295,7 @@ export async function getIndustryInsights() {
     });
 
     console.log("✅ Industry insights created and linked successfully");
-    return industryInsight;
+    return transformInsightData(industryInsight);
   } catch (error) {
     console.error("❌ Error in getIndustryInsights:", error);
     if (error instanceof Error) {

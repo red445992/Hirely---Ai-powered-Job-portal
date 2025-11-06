@@ -12,6 +12,9 @@ import {
   Target,
   ArrowRight,
 } from "lucide-react";
+
+// Make this page dynamic since it uses cookies for authentication
+export const dynamic = 'force-dynamic';
 import Link from "next/link";
 import Image from "next/image";
 import {

@@ -3,6 +3,9 @@ import DashboardView from "./_components/dashboard-view";
 import { getUserOnboardingStatus } from "@/actions/user";
 import { redirect } from "next/navigation";
 
+// Make this page dynamic since it uses cookies for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const { isOnboarded } = await getUserOnboardingStatus();
 
