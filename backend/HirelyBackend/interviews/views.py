@@ -5,10 +5,8 @@ from rest_framework.response import Response
 from django.conf import settings
 from .models import Interview
 from .serializers import InterviewSerializer, InterviewCreateSerializer
-import json
-import random
-import os
 from pathlib import Path
+from rest_framework.permissions import AllowAny
 
 def get_random_interview_cover(user_id=None):
     """Generate deterministic cover image based on user ID"""
@@ -80,6 +78,7 @@ def generate_questions_with_ai(role, level, techstack, interview_type, amount):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def generate_interview(request):
+    permission_classes = [AllowAny] 
     """Generate interview questions and save interview"""
     serializer = InterviewCreateSerializer(data=request.data)
     
