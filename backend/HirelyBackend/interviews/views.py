@@ -1,12 +1,11 @@
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.conf import settings
 from .models import Interview
 from .serializers import InterviewSerializer, InterviewCreateSerializer
 from pathlib import Path
-from rest_framework.permissions import AllowAny
 
 def get_random_interview_cover(user_id=None):
     """Generate deterministic cover image based on user ID"""
@@ -76,9 +75,8 @@ def generate_questions_with_ai(role, level, techstack, interview_type, amount):
     return questions[:amount]
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def generate_interview(request):
-    permission_classes = [AllowAny] 
     """Generate interview questions and save interview"""
     serializer = InterviewCreateSerializer(data=request.data)
     
@@ -91,6 +89,13 @@ def generate_interview(request):
     
     try:
         data = serializer.validated_data
+        
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return Response({
+                'success': False,
+                'error': 'Authentication required to generate interviews'
+            }, status=status.HTTP_401_UNAUTHORIZED)
         
         # Generate questions
         questions = generate_questions_with_ai(
@@ -133,20 +138,27 @@ def generate_interview(request):
 
 class InterviewListCreateView(generics.ListCreateAPIView):
     serializer_class = InterviewSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     def get_queryset(self):
-        return Interview.objects.filter(user=self.request.user)
+        # If user is authenticated, filter by user, otherwise return all
+        if self.request.user.is_authenticated:
+            return Interview.objects.filter(user=self.request.user)
+        return Interview.objects.all()
 
 class InterviewDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = InterviewSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     lookup_field = 'id'
     
     def get_queryset(self):
-        return Interview.objects.filter(user=self.request.user)
+        # If user is authenticated, filter by user, otherwise return all
+        if self.request.user.is_authenticated:
+            return Interview.objects.filter(user=self.request.user)
+        return Interview.objects.all()
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def health_check(request):
     """Health check endpoint"""
     return Response({

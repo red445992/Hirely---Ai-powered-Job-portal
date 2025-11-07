@@ -103,13 +103,9 @@ const InterviewCard = ({
           {/* Action Button */}
           <Button className="bg-blue-600 hover:bg-blue-700 text-white">
             <Link
-              href={
-                feedback
-                  ? `/interview/${id}/feedback`
-                  : `/interview/${id}`
-              }
+              href= "/ai_interview/interview/"
             >
-              {feedback ? "Check Feedback" : "View Interview"}
+               View Interview
             </Link>
           </Button>
         </div>
