@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +60,7 @@ interface ResumeStats {
 
 export default function ResumesPage() {
   const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [stats, setStats] = useState<ResumeStats | null>(null);
@@ -286,10 +288,19 @@ export default function ResumesPage() {
           <h1 className="text-3xl font-bold">Resume Management</h1>
           <p className="text-muted-foreground">Manage and organize your resumes</p>
         </div>
-        <Button onClick={loadData} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => router.push('/resumes/ATS')}
+            className="gap-2"
+          >
+            <Target className="h-4 w-4" />
+            Resume Scorer
+          </Button>
+          <Button onClick={loadData} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
