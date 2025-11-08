@@ -81,8 +81,31 @@ Consider that the job market is highly competitive. Provide detailed, actionable
     // Convert file to the format Gemini expects
     const filePart = await fileToGenerativePart(file);
 
-    // Generate content with both the PDF and the prompt
-    const result = await model.generateContent([prompt, filePart]);
+    // Generate content with retry logic for rate limiting
+    let result;
+    let retries = 3;
+    let delay = 2000; // Start with 2 second delay
+    
+    for (let i = 0; i < retries; i++) {
+      try {
+        result = await model.generateContent([prompt, filePart]);
+        break; // Success, exit retry loop
+      } catch (error: any) {
+        if (error?.status === 429 && i < retries - 1) {
+          // Rate limited, wait and retry
+          console.log(`Rate limited, waiting ${delay}ms before retry ${i + 1}/${retries}...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 2; // Exponential backoff
+        } else {
+          throw error; // Re-throw if not rate limit or last retry
+        }
+      }
+    }
+    
+    if (!result) {
+      throw new Error('Failed to get response after retries');
+    }
+    
     const response = result.response;
     const text = response.text();
 

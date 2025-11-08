@@ -73,7 +73,9 @@ const OnboardingForm = ({ industries }: OnboardingFormProps) => {
       });
     } catch (error) {
       console.error("Onboarding error:", error);
-      toast.error("Failed to complete profile. Please try again.");
+      toast.error("Failed to complete profile. Please try again.",{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
     }
   };
 

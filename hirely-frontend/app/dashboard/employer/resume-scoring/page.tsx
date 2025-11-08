@@ -61,7 +61,9 @@ export default function ResumeScoringDashboard() {
     try {
       const token = localStorage.getItem("access_token");
       if (!token) {
-        toast.error("Please log in to access this feature");
+        toast.error("Please log in to access this feature",{
+          style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+        });
         setJobs([]);
         return;
       }
@@ -80,17 +82,23 @@ export default function ResumeScoringDashboard() {
         if (jobsArray.length > 0) {
           setSelectedJobId(jobsArray[0].id.toString());
         } else {
-          toast.error("No jobs found. Please create a job first.");
+          toast.error("No jobs found. Please create a job first.",{
+            style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+          });
         }
       } else {
         console.error("Failed to fetch jobs:", response.statusText);
         setJobs([]);
-        toast.error("Failed to load jobs - please check your authentication");
+        toast.error("Failed to load jobs - please check your authentication",{
+          style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+        });
       }
     } catch (error) {
       console.error("Error fetching jobs:", error);
       setJobs([]);
-      toast.error("Network error - please check your connection");
+      toast.error("Network error - please check your connection",{
+        style :{ background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
     } finally {
       setJobsLoading(false);
     }
@@ -111,7 +119,9 @@ export default function ResumeScoringDashboard() {
       if (response.ok) {
         const data = await response.json();
         setCandidates(data.results || []);
-        toast.success(`Analyzed ${data.results?.length || 0} candidates`);
+        toast.success(`Analyzed ${data.results?.length || 0} candidates`,{
+          style: { background: "linear-gradient(90deg, #22c55e, #16a34a)" },
+        });
         
         // Auto-set the job description from the selected job for custom ranking
         const selectedJob = jobs.find(job => job.id.toString() === jobId);
@@ -119,11 +129,15 @@ export default function ResumeScoringDashboard() {
           setCustomJobDescription(selectedJob.description);
         }
       } else {
-        toast.error("Failed to analyze candidates");
+        toast.error("Failed to analyze candidates",{
+          style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+        });
       }
     } catch (error) {
       console.error("Error fetching candidate analysis:", error);
-      toast.error("Error analyzing candidates");
+      toast.error("Error analyzing candidates",{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
     } finally {
       setLoading(false);
     }
@@ -131,7 +145,9 @@ export default function ResumeScoringDashboard() {
 
   const rankByCustomJobMatch = async () => {
     if (!customJobDescription.trim()) {
-      toast.error("Please enter a job description for ranking");
+      toast.error("Please enter a job description for ranking",{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
       return;
     }
 
@@ -153,10 +169,14 @@ export default function ResumeScoringDashboard() {
       });
 
       setCandidates(rankedCandidates);
-      toast.success("Candidates re-ranked based on job description match!");
+      toast.success("Candidates re-ranked based on job description match!",{
+        style: { background: "linear-gradient(90deg, #22c55e, #16a34a)" },
+      });
     } catch (error) {
       console.error("Error ranking candidates:", error);
-      toast.error("Error ranking candidates");
+      toast.error("Error ranking candidates",{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
     } finally {
       setIsRanking(false);
     }

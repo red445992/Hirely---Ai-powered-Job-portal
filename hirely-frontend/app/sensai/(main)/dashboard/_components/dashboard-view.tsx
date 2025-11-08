@@ -117,15 +117,21 @@ const DashboardView = ({ insights, stats, recentActivities }: DashboardViewProps
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Redirecting to onboarding...");
+        toast.success("Redirecting to onboarding...",{
+          style: { background: "linear-gradient(90deg, #22c55e, #16a34a)" },
+        });
         router.push("/sensai/onboarding");
         router.refresh();
       } else {
-        toast.error(data.error || "Failed to reset onboarding");
+        toast.error(data.error || "Failed to reset onboarding",{
+          style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+        });
       }
     } catch (error) {
       console.error("Error resetting onboarding:", error);
-      toast.error("Failed to reset onboarding. Please try again.");
+      toast.error("Failed to reset onboarding. Please try again.",{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
     } finally {
       setIsResetting(false);
     }

@@ -49,7 +49,9 @@ export default function Quiz() {
 
   const handleNext = () => {
     if (!answers[currentQuestion]) {
-      toast.error("Please select an answer before continuing");
+      toast.error("Please select an answer before continuing",{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
       return;
     }
     
@@ -75,16 +77,22 @@ export default function Quiz() {
     // Check if all questions are answered
     const unanswered = answers.filter(a => a === null || a === undefined).length;
     if (unanswered > 0) {
-      toast.error(`Please answer all questions. ${unanswered} question(s) remaining.`);
+      toast.error(`Please answer all questions. ${unanswered} question(s) remaining.`,{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
       return;
     }
 
     const score = calculateScore();
     try {
       await saveQuizResultFn(quizData, answers, score);
-      toast.success("Quiz completed! Check your results below.");
+      toast.success("Quiz completed! Check your results below.",{
+        style: { background: "linear-gradient(90deg, #22c55e, #16a34a)" },
+      });
     } catch (error) {
-      toast.error(error?.message || "Failed to save quiz results");
+      toast.error(error?.message || "Failed to save quiz results",{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
     }
   };
 

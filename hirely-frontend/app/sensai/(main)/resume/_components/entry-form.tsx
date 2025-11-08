@@ -80,10 +80,14 @@ export function EntryForm({ type, entries, onChange }) {
   useEffect(() => {
     if (improvedContent && !isImproving) {
       setValue("description", improvedContent);
-      toast.success("Description improved successfully!");
+      toast.success("Description improved successfully!",{
+        style: { background: "linear-gradient(90deg, #22c55e, #16a34a)" },
+      });
     }
     if (improveError) {
-      toast.error(improveError.message || "Failed to improve description");
+      toast.error(improveError.message || "Failed to improve description",{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
     }
   }, [improvedContent, improveError, isImproving, setValue]);
 
@@ -91,7 +95,9 @@ export function EntryForm({ type, entries, onChange }) {
   const handleImproveDescription = async () => {
     const description = watch("description");
     if (!description) {
-      toast.error("Please enter a description first");
+      toast.error("Please enter a description first",{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
       return;
     }
 

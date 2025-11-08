@@ -90,7 +90,9 @@ export default function EditJobDialog({
 
       if (!response.ok) {
         throw new Error(`Failed to update job: ${response.status}`);
-        toast.error('')
+        toast.error('error updating job',{
+          style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+        });
       }
 
       const updatedJob = await response.json();

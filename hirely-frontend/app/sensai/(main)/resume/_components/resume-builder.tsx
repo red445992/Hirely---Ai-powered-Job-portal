@@ -75,10 +75,14 @@ export default function ResumeBuilder({ initialContent }) {
   // Handle save result
   useEffect(() => {
     if (saveResult && !isSaving) {
-      toast.success("Resume saved successfully!");
+      toast.success("Resume saved successfully!",{
+        style: { background: "linear-gradient(90deg, #22c55e, #16a34a)" },
+      });
     }
     if (saveError) {
-      toast.error(saveError.message || "Failed to save resume");
+      toast.error(saveError.message || "Failed to save resume",{
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
     }
   }, [saveResult, saveError, isSaving]);
 
