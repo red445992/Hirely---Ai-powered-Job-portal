@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pdf from 'pdf-parse';
 
 export async function POST(request: NextRequest) {
   try {
+    // Dynamic import for pdf-parse with proper typing
+    const pdfParse = await import('pdf-parse') as any;
+    const pdf = pdfParse.default || pdfParse;
+    
     const formData = await request.formData();
     const file = formData.get('file') as File;
     
