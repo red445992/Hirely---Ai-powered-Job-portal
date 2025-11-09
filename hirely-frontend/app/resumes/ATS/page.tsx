@@ -74,6 +74,11 @@ export default function ATSPage() {
       // Call the actual analysis function
       const analysisResult = await analyzeResumeFromFile(resumeFile, jobDescription);
       
+      console.log('🔍 Analysis Result:', analysisResult);
+      console.log('📋 Missing Keywords:', analysisResult.MissingKeywords);
+      console.log('📊 Keywords Type:', typeof analysisResult.MissingKeywords);
+      console.log('📏 Keywords Length:', analysisResult.MissingKeywords?.length);
+      
       setResult(analysisResult);
       toast.success('✨ Analysis Complete!');
       
