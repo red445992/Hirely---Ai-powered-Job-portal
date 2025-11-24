@@ -37,8 +37,15 @@ export default function JobDetailPage() {
     if (Number.isNaN(jobId)) return;
 
     fetchJobDetails();
-    fetchRelatedJobs();
   }, [jobId]);
+
+  // Fetch related jobs after the main job is loaded
+  useEffect(() => {
+    if (job) {
+      console.log("🔄 Job loaded, fetching related jobs for category:", job.category);
+      fetchRelatedJobs();
+    }
+  }, [job?.id, job?.category]);
 
   useEffect(() => {
     console.log("🔍 Related jobs updated:", relatedJobs.length, "jobs for jobId:", jobId);
@@ -73,6 +80,8 @@ export default function JobDetailPage() {
 
   const fetchRelatedJobs = async () => {
     try {
+      console.log("🚀 Fetching related jobs from:", `${process.env.NEXT_PUBLIC_API_URL}/jobs/addjobs/`);
+      
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/jobs/addjobs/`,
         {
@@ -84,17 +93,69 @@ export default function JobDetailPage() {
         }
       );
 
+      console.log("📡 Response status:", response.status, response.statusText);
+
       if (response.ok) {
         const data = await response.json();
-        const jobs = Array.isArray(data) ? data : data.jobs || [];
-        console.log("📋 Related jobs fetched:", jobs.length, "jobs");
-        setRelatedJobs(jobs.slice(0, 3)); // Take first 3
+        console.log("📦 Raw API response:", data);
+        console.log("📦 Response type:", typeof data, "Is array:", Array.isArray(data));
+        
+        // Handle multiple response formats
+        let allJobs: Job[] = [];
+        if (Array.isArray(data)) {
+          allJobs = data;
+        } else if (data?.results && Array.isArray(data.results)) {
+          allJobs = data.results;
+        } else if (data?.jobs && Array.isArray(data.jobs)) {
+          allJobs = data.jobs;
+        } else if (data?.data && Array.isArray(data.data)) {
+          allJobs = data.data;
+        }
+        
+        console.log("📋 All jobs fetched:", allJobs.length, "jobs");
+        console.log("📋 Job categories:", allJobs.map(j => ({ id: j.id, title: j.title, category: j.category })));
+        
+        // Filter jobs by the same category as the current job
+        let filtered = allJobs;
+        
+        if (job && job.category) {
+          // Case-insensitive category matching
+          const currentCategory = job.category.toLowerCase();
+          filtered = allJobs.filter(j => 
+            j.category?.toLowerCase() === currentCategory && j.id !== jobId
+          );
+          console.log(`🔍 Filtered by category "${job.category}":`, filtered.length, "jobs");
+          console.log(`🔍 Matching jobs:`, filtered.map(j => ({ id: j.id, title: j.title, category: j.category })));
+        } else {
+          // If no category yet, just exclude current job
+          filtered = allJobs.filter(j => j.id !== jobId);
+          console.log("⚠️ No category available yet, excluding current job only");
+        }
+        
+        // If we have less than 3 jobs in the same category, add other jobs
+        if (filtered.length < 3) {
+          const otherJobs = allJobs.filter(j => 
+            j.id !== jobId && 
+            !filtered.some(f => f.id === j.id)
+          );
+          console.log(`➕ Adding ${Math.min(otherJobs.length, 3 - filtered.length)} jobs from other categories`);
+          filtered = [...filtered, ...otherJobs];
+        }
+        
+        // Take top 3
+        const finalJobs = filtered.slice(0, 3);
+        setRelatedJobs(finalJobs);
+        console.log("✅ Related jobs set:", finalJobs.length, "jobs");
+        console.log("✅ Final jobs:", finalJobs.map(j => ({ id: j.id, title: j.title, category: j.category })));
       } else {
-        console.log("📋 API failed, using mock related jobs");
+        const errorText = await response.text();
+        console.error("❌ API failed with status:", response.status, errorText);
+        console.log("📋 Using mock related jobs as fallback");
         setRelatedJobs(getMockRelatedJobs());
       }
     } catch (err) {
-      console.log("📋 Error fetching, using mock related jobs");
+      console.error("❌ Error fetching related jobs:", err);
+      console.log("📋 Using mock related jobs as fallback");
       setRelatedJobs(getMockRelatedJobs());
     }
   };

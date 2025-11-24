@@ -18,9 +18,12 @@ import {
   Upload,
   X,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
+import { improveWithAI } from "@/actions/resume";
 
 interface ApplyJobsProps {
   jobData: {
@@ -54,6 +57,7 @@ export default function ApplyJobs({ jobData, onClose, isModal = false }: ApplyJo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resumeName, setResumeName] = useState("");
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [isImprovingCoverLetter, setIsImprovingCoverLetter] = useState(false);
 
   useEffect(() => {
     // Basic debug info on component mount
@@ -74,6 +78,50 @@ export default function ApplyJobs({ jobData, onClose, isModal = false }: ApplyJo
   const handleRemoveResume = () => {
     setFormData(prev => ({ ...prev, resume: null }));
     setResumeName("");
+  };
+
+  const handleImproveCoverLetter = async () => {
+    if (!formData.coverLetter || formData.coverLetter.trim() === "") {
+      toast.error("Please write something in your cover letter first", {
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
+      return;
+    }
+
+    setIsImprovingCoverLetter(true);
+    
+    try {
+      console.log("🤖 Improving cover letter with AI for job:", jobData.title);
+      
+      const improvedContent = await improveWithAI({
+        current: formData.coverLetter,
+        type: "cover letter"
+      });
+      
+      setFormData(prev => ({ ...prev, coverLetter: improvedContent }));
+      
+      toast.success("Cover letter improved with AI! ✨", {
+        style: { background: "linear-gradient(90deg, #22c55e, #16a34a)" },
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Error improving cover letter:", error);
+      
+      let errorMessage = "Failed to improve cover letter. Please try again.";
+      if (error instanceof Error) {
+        if (error.message.includes("onboarding")) {
+          errorMessage = "Please complete your profile to use AI improvements";
+        } else if (error.message.includes("Unauthorized")) {
+          errorMessage = "Please sign in to use AI improvements";
+        }
+      }
+      
+      toast.error(errorMessage, {
+        style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+      });
+    } finally {
+      setIsImprovingCoverLetter(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -367,18 +415,42 @@ export default function ApplyJobs({ jobData, onClose, isModal = false }: ApplyJo
 
             {/* Cover Letter */}
             <div>
-              <label htmlFor="coverLetter" className="block text-sm font-medium text-neutral-700 mb-2">
-                Cover Letter
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="coverLetter" className="block text-sm font-medium text-neutral-700">
+                  Cover Letter
+                </label>
+                <button
+                  type="button"
+                  onClick={handleImproveCoverLetter}
+                  disabled={isImprovingCoverLetter || !formData.coverLetter}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isImprovingCoverLetter ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Improving...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Improve with AI
+                    </>
+                  )}
+                </button>
+              </div>
               <textarea
                 id="coverLetter"
                 name="coverLetter"
                 value={formData.coverLetter}
                 onChange={handleInputChange}
+                disabled={isImprovingCoverLetter}
                 placeholder="Tell us why you're interested in this position and what makes you a great candidate..."
-                rows={4}
-                className="w-full px-4 py-2.5 border border-neutral-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                rows={6}
+                className="w-full px-4 py-2.5 border border-neutral-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none disabled:bg-neutral-50 disabled:cursor-not-allowed"
               />
+              <p className="text-xs text-neutral-500 mt-1">
+                💡 Tip: Write a basic cover letter first, then click "Improve with AI" to enhance it
+              </p>
             </div>
           </div>
 

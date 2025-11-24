@@ -119,7 +119,11 @@ export default function JobsLayout({
       {/* Search Bar Section */}
       <div className="bg-white border-b border-neutral-200">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <SearchJobs onSearch={onSearch} />
+          <SearchJobs 
+            onSearch={onSearch}
+            initialQuery={searchQuery}
+            initialLocation={searchLocation}
+          />
         </div>
       </div>
 

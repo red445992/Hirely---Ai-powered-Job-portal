@@ -8,6 +8,8 @@ interface RelatedJob {
   level: string;
   location: string;
   description: string;
+  category?: string;
+  salary?: string;
 }
 
 interface JobDetailSidebarProps {
@@ -16,20 +18,34 @@ interface JobDetailSidebarProps {
 }
 
 export default function JobDetailSidebar({ relatedJobs, currentJobId }: JobDetailSidebarProps) {
-  // Filter out current job
+  // Filter out current job (just in case)
   const filteredJobs = relatedJobs.filter(job => job.id !== currentJobId);
   
   console.log("🔍 Sidebar Debug:", {
     relatedJobs: relatedJobs.length,
     currentJobId,
-    filteredJobs: filteredJobs.length
+    filteredJobs: filteredJobs.length,
+    categories: filteredJobs.map(j => j.category)
   });
+
+  // Get the primary category if all jobs are from same category
+  const primaryCategory = filteredJobs.length > 0 && 
+    filteredJobs.every(j => j.category === filteredJobs[0].category)
+    ? filteredJobs[0].category
+    : null;
 
   return (
     <div className="bg-white border border-neutral-200 rounded-lg p-6">
-      <h3 className="text-lg font-bold text-neutral-900 mb-4">
-        More jobs 
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-neutral-900">
+          {primaryCategory ? `Similar ${primaryCategory} Jobs` : 'Related Jobs'}
+        </h3>
+        {filteredJobs.length > 0 && (
+          <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-1 rounded-full">
+            {filteredJobs.length}
+          </span>
+        )}
+      </div>
       
       {filteredJobs.length === 0 ? (
         <div className="text-center py-8">
@@ -59,14 +75,24 @@ export default function JobDetailSidebar({ relatedJobs, currentJobId }: JobDetai
                   <h4 className="font-semibold text-neutral-900 mb-1 truncate">
                     {job.title}
                   </h4>
-                  <div className="flex gap-2 mb-2">
+                  <div className="flex flex-wrap gap-1.5 mb-2">
                     <span className="px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded border border-blue-200">
                       {job.company}
                     </span>
                     <span className="px-2 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 rounded border border-purple-200">
                       {job.level}
                     </span>
+                    {job.category && (
+                      <span className="px-2 py-0.5 text-xs font-medium bg-green-50 text-green-700 rounded border border-green-200">
+                        {job.category}
+                      </span>
+                    )}
                   </div>
+                  {job.salary && (
+                    <p className="text-xs text-neutral-600 mb-1">
+                      💰 {job.salary}
+                    </p>
+                  )}
                 </div>
               </div>
 

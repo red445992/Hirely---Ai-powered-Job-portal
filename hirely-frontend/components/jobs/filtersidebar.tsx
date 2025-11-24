@@ -30,26 +30,30 @@ export default function FilterSidebar({
   onClearSearch,
 }: FilterSidebarProps) {
   
+  // Debug: Log the counts being received
+  console.log('📊 Filter Sidebar - Category Counts:', categoryCounts);
+  console.log('📍 Filter Sidebar - Location Counts:', locationCounts);
+  
   // Manual categories with fallback counts
   const defaultCategories = [
-    { name: 'Programming'},
-    { name: 'Design'},
-    { name: 'Marketing'},
-    { name: 'Sales'},
-    { name: 'Finance'},
-    { name: 'Human Resources'},
-    { name: 'Operations'},
-    { name: 'Customer Service'},
+    { name: 'Programming', count: 0 },
+    { name: 'Design', count: 0 },
+    { name: 'Marketing', count: 0 },
+    { name: 'Sales', count: 0 },
+    { name: 'Finance', count: 0 },
+    { name: 'Human Resources', count: 0 },
+    { name: 'Operations', count: 0 },
+    { name: 'Customer Service', count: 0 },
   ];
 
   const defaultLocations = [
-    { name: 'Kathmandu'},
-    { name: 'bhaktapur'},
-    { name: 'lalitpur'},
-    { name: 'butwal'},
-    { name: 'new york'},
-    { name: 'pokhara'},
-    { name: 'Remote'},
+    { name: 'Kathmandu', count: 0 },
+    { name: 'bhaktapur', count: 0 },
+    { name: 'lalitpur', count: 0 },
+    { name: 'butwal', count: 0 },
+    { name: 'new york', count: 0 },
+    { name: 'pokhara', count: 0 },
+    { name: 'Remote', count: 0 },
   ];
 
   // Use backend counts if available, otherwise use defaults
@@ -64,6 +68,9 @@ export default function FilterSidebar({
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count)
     : defaultLocations;
+
+  console.log('✅ Categories with counts:', categories);
+  console.log('✅ Locations with counts:', locations);
 
   const hasActiveFilters = searchQuery || searchLocation || 
     selectedCategories.length > 0 || selectedLocations.length > 0;
@@ -175,15 +182,17 @@ export default function FilterSidebar({
                     type="checkbox"
                     checked={selectedCategories.includes(category.name)}
                     onChange={() => onCategoryChange(category.name)}
-                    className="w-4 h-4 text-blue-600 border-neutral-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0"
+                    className="w-4 h-4 text-blue-600 border-neutral-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer shrink-0"
                   />
                   <span className="text-sm text-neutral-700 group-hover:text-neutral-900 capitalize truncate">
                     {category.name}
                   </span>
                 </div>
-                <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-1 rounded-md ml-2 flex-shrink-0">
-                  {/* {category.count} */}
-                </span>
+                {category.count !== undefined && (
+                  <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-1 rounded-md ml-2 shrink-0">
+                    {category.count}
+                  </span>
+                )}
               </label>
             ))}
           </div>
@@ -212,15 +221,17 @@ export default function FilterSidebar({
                     type="checkbox"
                     checked={selectedLocations.includes(location.name)}
                     onChange={() => onLocationChange(location.name)}
-                    className="w-4 h-4 text-blue-600 border-neutral-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0"
+                    className="w-4 h-4 text-blue-600 border-neutral-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer shrink-0"
                   />
                   <span className="text-sm text-neutral-700 group-hover:text-neutral-900 capitalize truncate">
                     {location.name}
                   </span>
                 </div>
-                <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-1 rounded-md ml-2 flex-shrink-0">
-                  {/* {location.count} */}
-                </span>
+                {location.count !== undefined && (
+                  <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-1 rounded-md ml-2 shrink-0">
+                    {location.count}
+                  </span>
+                )}
               </label>
             ))}
           </div>
