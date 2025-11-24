@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_API_KEY || "");
+const modelName = process.env.GOOGLE_GEMINI_MODEL || "gemini-1.5-flash";
 
 export interface ATSAnalysisResult {
   "JD Match": string;
@@ -53,7 +54,7 @@ export async function analyzeResumeFromFile(
     }
 
     // Use Gemini Pro Vision to read the PDF directly
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: modelName });
 
     const prompt = `
 Act as an expert ATS (Applicant Tracking System) specialist with deep expertise in:

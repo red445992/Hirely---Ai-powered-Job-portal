@@ -6,12 +6,14 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { revalidatePath } from "next/cache";
 
 const apiKey =  process.env.GOOGLE_GENERATIVE_API_KEY;
+const modelName = process.env.GOOGLE_GEMINI_MODEL || "gemini-1.5-flash";
+
 if (!apiKey) {
   throw new Error("GOOGLE_GENERATIVE_API_KEY is not defined in environment variables");
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+const model = genAI.getGenerativeModel({ model: modelName });
 
 export async function saveResume(content: string) {
   try {

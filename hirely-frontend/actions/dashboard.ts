@@ -48,8 +48,8 @@ if (!apiKey) {
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
-// Use the correct model name - gemini-pro or gemini-1.5-pro instead of gemini-1.5-flash
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+const modelName = process.env.GOOGLE_GEMINI_MODEL || "gemini-1.5-flash";
+const model = genAI.getGenerativeModel({ model: modelName });
 
 export const generateAIInsights = async (industry: string) => {
   try {
