@@ -23,6 +23,9 @@ interface Interview {
   userId: string;
   type: string;
   finalized: boolean;
+  status?: 'pending' | 'completed' | 'in-progress';
+  score?: number;
+  duration?: number;
 }
 
 interface CreateFeedbackParams {

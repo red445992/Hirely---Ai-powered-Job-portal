@@ -125,7 +125,7 @@ class QuestionSet(models.Model):
 class Assessment(models.Model):
     """Stores quiz assessment results"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assessments')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assessments', null=True, blank=True)
     question_set = models.ForeignKey(QuestionSet, on_delete=models.SET_NULL, null=True, blank=True)
     category = models.CharField(max_length=50)
     score = models.IntegerField()  # 0-100

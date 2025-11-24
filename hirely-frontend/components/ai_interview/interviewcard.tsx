@@ -4,9 +4,20 @@ import React from "react";
 import dayjs from "dayjs";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { Button } from "../ui/button";
+import { Card } from "../ui/card";
 import { getRandomInterviewCover } from "@/lib/utils";
 import DisplayTechIcons from "./DisplayTechIcons";
+import { 
+  Calendar, 
+  Star, 
+  Clock, 
+  ArrowRight, 
+  Sparkles,
+  CheckCircle2 
+} from "lucide-react";
+
 // Define types for the component props
 interface InterviewCardProps {
   id: string;
@@ -15,6 +26,9 @@ interface InterviewCardProps {
   type: string;
   techstack?: string[];
   createdAt?: string | Date;
+  status?: 'pending' | 'completed' | 'in-progress';
+  score?: number;
+  duration?: number;
 }
 
 const InterviewCard = ({
@@ -24,93 +38,157 @@ const InterviewCard = ({
   type,
   techstack = [],
   createdAt,
+  status = 'pending',
+  score,
+  duration = 30,
 }: InterviewCardProps) => {
-  // Simplified feedback state (no functionality for now)
-  const feedback = null;
-
   const normalizedType = /mix/gi.test(type) ? "Mixed" : type;
 
-  // Badge color mapping using standard Tailwind classes
-  const badgeColor = {
-    Behavioral: "bg-blue-100 text-blue-800",
-    Mixed: "bg-purple-100 text-purple-800",
-    Technical: "bg-green-100 text-green-800",
-  }[normalizedType] || "bg-gray-100 text-gray-800";
+  // Enhanced badge styling with gradients
+  const badgeStyles = {
+    Behavioral: "bg-gradient-to-r from-blue-500 to-blue-600 text-white",
+    Mixed: "bg-gradient-to-r from-purple-500 to-purple-600 text-white",
+    Technical: "bg-gradient-to-r from-green-500 to-green-600 text-white",
+  }[normalizedType] || "bg-gradient-to-r from-gray-500 to-gray-600 text-white";
 
-  // Use a default date if createdAt is not provided (for consistency)
+  // Status styling
+  const statusConfig = {
+    pending: { 
+      icon: Clock, 
+      text: "Not Started", 
+      color: "text-gray-600",
+      bg: "bg-gray-100" 
+    },
+    'in-progress': { 
+      icon: Sparkles, 
+      text: "In Progress", 
+      color: "text-orange-600",
+      bg: "bg-orange-100" 
+    },
+    completed: { 
+      icon: CheckCircle2, 
+      text: "Completed", 
+      color: "text-green-600",
+      bg: "bg-green-100" 
+    },
+  }[status];
+
+  const StatusIcon = statusConfig.icon;
+
   const defaultDate = new Date('2024-01-01').getTime();
   const formattedDate = dayjs(createdAt || defaultDate).format("MMM D, YYYY");
 
-  // Simple random cover image function
-  
-
   return (
-    <div className="w-[360px] max-sm:w-full min-h-96 border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-      <div className="p-6 h-full flex flex-col justify-between relative overflow-hidden bg-linear-to-b from-gray-50 to-white rounded-2xl">
-        <div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -8, transition: { duration: 0.2 } }}
+      className="h-full"
+    >
+      <Card className="group h-full flex flex-col overflow-hidden border-2 border-gray-200 hover:border-indigo-300 hover:shadow-xl transition-all duration-300 bg-white">
+        {/* Header Section with Gradient Background */}
+        <div className="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6 pb-20">
           {/* Type Badge */}
-          <div className={`absolute top-0 right-0 w-fit px-4 py-2 rounded-bl-lg ${badgeColor}`}>
-            <p className="text-sm font-medium">{normalizedType}</p>
+          <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${badgeStyles} shadow-lg`}>
+            {normalizedType}
           </div>
 
-          {/* Cover Image */}
-          <Image
-            src={getRandomInterviewCover(id)}
-            alt="cover-image"
-            width={90}
-            height={90}
-            className="rounded-full object-cover w-[90px] h-[90px]"
-          />
+          {/* Cover Image with Animation */}
+          <motion.div 
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            transition={{ duration: 0.3 }}
+            className="absolute -bottom-12 left-6"
+          >
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full blur-xl opacity-50"></div>
+              <Image
+                src={getRandomInterviewCover(id)}
+                alt="cover-image"
+                width={100}
+                height={100}
+                className="relative rounded-full object-cover w-[100px] h-[100px] border-4 border-white shadow-lg"
+              />
+            </div>
+          </motion.div>
+        </div>
 
-          {/* Interview Role */}
-          <h3 className="mt-5 text-xl font-semibold capitalize text-gray-900">
+        {/* Content Section */}
+        <div className="flex-1 p-6 pt-16 flex flex-col">
+          {/* Interview Title */}
+          <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-1">
             {role} Interview
           </h3>
 
-          {/* Date & Score */}
-          <div className="flex flex-row gap-5 mt-3">
-            <div className="flex flex-row gap-2 items-center">
-              <Image
-                src="/calendar.svg"
-                width={22}
-                height={22}
-                alt="calendar"
-              />
-              <p className="text-sm text-gray-600">{formattedDate}</p>
-            </div>
-
-            <div className="flex flex-row gap-2 items-center">
-              <Image src="/star.svg" width={22} height={22} alt="star" />
-              <p className="text-sm text-gray-600">
-                {/* {feedback?.totalScore || "---"}/100 */}
-              </p>
-            </div>
+          {/* Status Badge */}
+          <div className={`inline-flex items-center gap-2 w-fit px-3 py-1.5 rounded-lg mb-4 ${statusConfig.bg}`}>
+            <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
+            <span className={`text-sm font-medium ${statusConfig.color}`}>
+              {statusConfig.text}
+            </span>
           </div>
 
-          {/* Feedback or Placeholder Text */}
-          <p className="line-clamp-2 mt-5 text-gray-700 text-sm">
-            {/* {feedback?.finalAssessment || */}
-              "You haven't taken this interview yet. Take it now to improve your skills."
-          </p>
-        </div>
+          {/* Metadata */}
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Calendar className="w-4 h-4 text-indigo-500" />
+              <span>{formattedDate}</span>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Clock className="w-4 h-4 text-indigo-500" />
+              <span>{duration} minutes</span>
+            </div>
 
-        {/* Bottom Section */}
-        <div className="flex flex-row justify-between items-center mt-6">
-          {/* Tech Stack Icons (simplified for now) */}
-          
-          <DisplayTechIcons techStack={techstack} />
+            {status === 'completed' && score !== undefined && (
+              <div className="flex items-center gap-2 text-sm">
+                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                <span className="font-semibold text-gray-900">{score}/100</span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                  score >= 80 ? 'bg-green-100 text-green-700' : 
+                  score >= 60 ? 'bg-orange-100 text-orange-700' : 
+                  'bg-red-100 text-red-700'
+                }`}>
+                  {score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : 'Needs Improvement'}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Description */}
+          <p className="text-sm text-gray-600 mb-4 line-clamp-2 flex-1">
+            {status === 'completed' 
+              ? `You've completed this interview with a score of ${score || 0}/100. Review your performance and feedback.`
+              : status === 'in-progress'
+              ? "Continue where you left off and complete this interview."
+              : "Start this interview to practice your skills and get AI-powered feedback."}
+          </p>
+
+          {/* Tech Stack */}
+          {techstack && techstack.length > 0 && (
+            <div className="mb-4">
+              <DisplayTechIcons techStack={techstack} />
+            </div>
+          )}
 
           {/* Action Button */}
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Link
-              href= "/ai_interview/interview/"
+          <Link 
+            href={status === 'completed' ? `/ai_interview/recordings/${id}` : `/ai_interview/interview/${id}`} 
+            className="w-full"
+          >
+            <Button 
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
             >
-               View Interview
-            </Link>
-          </Button>
+              <span>
+                {status === 'completed' ? 'Review Interview' : 
+                 status === 'in-progress' ? 'Continue Interview' : 
+                 'Start Interview'}
+              </span>
+              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
         </div>
-      </div>
-    </div>
+      </Card>
+    </motion.div>
   );
 };
 
