@@ -12,9 +12,13 @@ import { Search, Star, Trophy, User, Mail, Phone, FileText, Brain, ArrowUpDown, 
 import { toast } from "sonner";
 
 interface CandidateAnalysis {
+  application_id: number;
   candidate: string;
   candidate_name: string;
   email: string;
+  phone: string;
+  status: string;
+  applied_date: string;
   score: number;
   parsed_data: {
     entities: {
@@ -110,6 +114,13 @@ export default function ResumeScoringDashboard() {
     setLoading(true);
     try {
       const token = localStorage.getItem("access_token");
+      if (!token) {
+        toast.error("Please log in to view candidates",{
+          style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+        });
+        return;
+      }
+
       const response = await fetch(`http://localhost:8000/applications/resume-dashboard/${jobId}/`, {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -118,26 +129,47 @@ export default function ResumeScoringDashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        setCandidates(data.results || []);
-        toast.success(`Analyzed ${data.results?.length || 0} candidates`,{
-          style: { background: "linear-gradient(90deg, #22c55e, #16a34a)" },
-        });
+        const candidatesList = data.results || [];
+        setCandidates(candidatesList);
         
-        // Auto-set the job description from the selected job for custom ranking
-        const selectedJob = jobs.find(job => job.id.toString() === jobId);
-        if (selectedJob && !customJobDescription) {
-          setCustomJobDescription(selectedJob.description);
+        if (candidatesList.length === 0) {
+          toast.info(data.message || "No applications found for this job",{
+            style: { background: "linear-gradient(90deg, #3b82f6, #2563eb)" },
+          });
+        } else {
+          const analyzed = data.analyzed || candidatesList.filter((c: CandidateAnalysis) => c.score > 0).length;
+          toast.success(`Analyzed ${analyzed} of ${data.total_applications || candidatesList.length} candidates`,{
+            style: { background: "linear-gradient(90deg, #22c55e, #16a34a)" },
+          });
         }
-      } else {
-        toast.error("Failed to analyze candidates",{
+        
+        // Auto-set the job description from the API response or selected job
+        if (data.job_description) {
+          setCustomJobDescription(data.job_description);
+        } else {
+          const selectedJob = jobs.find(job => job.id.toString() === jobId);
+          if (selectedJob && !customJobDescription) {
+            setCustomJobDescription(selectedJob.description);
+          }
+        }
+      } else if (response.status === 404) {
+        toast.error("Job not found or you don't have permission to view it",{
           style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
         });
+        setCandidates([]);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData.error || "Failed to analyze candidates",{
+          style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
+        });
+        setCandidates([]);
       }
     } catch (error) {
       console.error("Error fetching candidate analysis:", error);
-      toast.error("Error analyzing candidates",{
+      toast.error("Network error - please check your connection",{
         style: { background: "linear-gradient(90deg, #ef4444, #b91c1c)" },
       });
+      setCandidates([]);
     } finally {
       setLoading(false);
     }
@@ -202,8 +234,9 @@ export default function ResumeScoringDashboard() {
     });
 
   const getScoreColor = (score: number) => {
-    if (score >= 4) return "text-green-600 bg-green-50";
-    if (score >= 3) return "text-yellow-600 bg-yellow-50";
+    if (score >= 4.0) return "text-green-600 bg-green-50";
+    if (score >= 3.0) return "text-yellow-600 bg-yellow-50";
+    if (score >= 2.0) return "text-orange-600 bg-orange-50";
     return "text-red-600 bg-red-50";
   };
 
@@ -438,14 +471,22 @@ export default function ResumeScoringDashboard() {
                   </div>
                   <div>
                     <CardTitle className="text-xl">{candidate.candidate_name}</CardTitle>
-                    <CardDescription className="flex items-center gap-4 mt-1">
+                    <CardDescription className="flex flex-wrap items-center gap-4 mt-1">
                       <span className="flex items-center gap-1">
                         <Mail className="h-4 w-4" />
                         {candidate.email}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        @{candidate.candidate}
+                      {candidate.phone && candidate.phone !== "N/A" && (
+                        <span className="flex items-center gap-1">
+                          <Phone className="h-4 w-4" />
+                          {candidate.phone}
+                        </span>
+                      )}
+                      <Badge variant="outline" className="text-xs capitalize">
+                        {candidate.status}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        Applied: {candidate.applied_date}
                       </span>
                     </CardDescription>
                   </div>

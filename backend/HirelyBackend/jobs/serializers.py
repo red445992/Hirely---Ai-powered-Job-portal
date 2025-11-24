@@ -25,7 +25,7 @@ class JobSerializer(serializers.ModelSerializer):
         return obj.created_at.strftime("%d %b. %Y")
     
     def get_applicants_count(self, obj):
-        return 0  # Update when you have applications
+        return obj.applications.count()
 
 class JobCreateSerializer(serializers.ModelSerializer):
     class Meta:
