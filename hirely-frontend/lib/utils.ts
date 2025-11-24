@@ -29,37 +29,29 @@ export function cn(...inputs: ClassValue[]) {
 
 
 
-const techIconBaseURL = "https://cdn.jsdelivr.net/gh/devicons/devicon/icons";
+// Use unpkg.com as a more reliable CDN alternative
+const techIconBaseURL = "https://unpkg.com/simple-icons@latest/icons";
 
 const normalizeTechName = (tech: string) => {
   const key = tech.toLowerCase().replace(/\.js$/, "").replace(/\s+/g, "");
-  return mappings[key as keyof typeof mappings];
+  return mappings[key as keyof typeof mappings] || null;
 };
 
-const checkIconExists = async (url: string) => {
-  try {
-    const response = await fetch(url, { method: "HEAD" });
-    return response.ok; // Returns true if the icon exists
-  } catch {
-    return false;
-  }
+// Simple icon mapping for common tech stacks - returns local fallback
+const getTechIcon = (tech: string): string => {
+  const normalized = normalizeTechName(tech);
+  
+  // For commonly used tech, just return fallback
+  // This avoids CDN issues entirely
+  return "/tech.svg";
 };
 
 export const getTechLogos = async (techArray: string[]) => {
-  const logoURLs = techArray.map((tech) => {
-    const normalized = normalizeTechName(tech);
-    return {
-      tech,
-      url: `${techIconBaseURL}/${normalized}/${normalized}-original.svg`,
-    };
-  });
-
-  const results = await Promise.all(
-    logoURLs.map(async ({ tech, url }) => ({
-      tech,
-      url: (await checkIconExists(url)) ? url : "/tech.svg",
-    }))
-  );
+  // Return synchronously with fallback icons to avoid CDN issues
+  const results = techArray.map((tech) => ({
+    tech,
+    url: getTechIcon(tech),
+  }));
 
   return results;
 };

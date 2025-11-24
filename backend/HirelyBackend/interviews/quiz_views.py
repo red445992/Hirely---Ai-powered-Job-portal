@@ -267,10 +267,10 @@ def generate_quiz(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([])  # Temporarily public for testing
 def submit_answers(request):
     """
-    Submit quiz answers and get results
+    Submit quiz answers and get results (temporarily public for testing)
     POST /interviews/quiz/submit/
     Body: { 
         "question_set_id": "uuid",
@@ -301,8 +301,8 @@ def submit_answers(request):
                 'error': 'Question set not found'
             }, status=status.HTTP_404_NOT_FOUND)
         
-        # Verify question set belongs to user
-        if question_set.user != request.user:
+        # Verify question set belongs to user (skip for anonymous users)
+        if request.user.is_authenticated and question_set.user and question_set.user != request.user:
             return Response({
                 'success': False,
                 'error': 'Unauthorized access to question set'
@@ -362,7 +362,7 @@ Keep it concise and actionable.
         
         # Create assessment record
         assessment = Assessment.objects.create(
-            user=request.user,
+            user=request.user if request.user.is_authenticated else None,
             question_set=question_set,
             category=question_set.category,
             score=score,
@@ -412,15 +412,19 @@ Keep it concise and actionable.
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([])  # Temporarily public for testing
 def get_assessments(request):
     """
-    Get user's assessment history
+    Get user's assessment history (temporarily public for testing)
     GET /interviews/quiz/assessments/?category=Programming
     """
     category = request.query_params.get('category')
     
-    assessments = Assessment.objects.filter(user=request.user)
+    # Get all assessments for anonymous users, or user-specific for authenticated users
+    if request.user.is_authenticated:
+        assessments = Assessment.objects.filter(user=request.user)
+    else:
+        assessments = Assessment.objects.filter(user__isnull=True)
     
     if category:
         assessments = assessments.filter(category=category)

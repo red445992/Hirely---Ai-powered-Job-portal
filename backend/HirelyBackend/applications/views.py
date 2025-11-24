@@ -264,25 +264,109 @@ from datetime import timedelta
 @permission_classes([IsAuthenticated])
 def resume_dashboard_view(request, job_id):
     """Return ranked list of candidates for a given job ID."""
-    applications = Application.objects.filter(job_id=job_id).select_related("applicant", "job")
+    try:
+        # Verify the job exists and belongs to the employer
+        job = get_object_or_404(Job, id=job_id, employer=request.user)
+        
+        applications = Application.objects.filter(
+            job_id=job_id
+        ).select_related("applicant", "job")
+        
+        if not applications.exists():
+            return Response({
+                "results": [],
+                "message": "No applications found for this job",
+                "job_title": job.title
+            })
 
-    results = []
-    for app in applications:
-        # Skip applications without resumes or applicants
-        if not app.resume or not app.applicant:
-            continue
-        resume_path = app.resume.path
-        job_desc = app.job.description or ""
-        analysis = analyze_resume(resume_path, job_desc)
+        results = []
+        skipped = 0
+        
+        for app in applications:
+            # Skip applications without resumes
+            if not app.resume:
+                skipped += 1
+                # Still include them but with zero score
+                results.append({
+                    "application_id": app.id,
+                    "candidate": app.applicant.username if app.applicant else "N/A",
+                    "candidate_name": app.full_name,
+                    "email": app.email,
+                    "phone": app.phone or "N/A",
+                    "status": app.status,
+                    "applied_date": app.applied_at.strftime("%Y-%m-%d") if hasattr(app, 'applied_at') else "N/A",
+                    "score": 0.0,
+                    "parsed_data": {
+                        "entities": {
+                            "person": [],
+                            "email": [app.email],
+                            "phone": [app.phone] if app.phone else [],
+                            "skills": [],
+                            "education": [],
+                            "experience": [],
+                            "organization": []
+                        },
+                        "method": "no_resume",
+                        "status": "Resume not uploaded"
+                    }
+                })
+                continue
+            
+            try:
+                resume_path = app.resume.path
+                job_desc = app.job.description or ""
+                analysis = analyze_resume(resume_path, job_desc)
 
-        results.append({
-            "candidate": app.applicant.username,
-            "candidate_name": app.full_name,
-            "email": app.email,
-            "score": analysis["score"],
-            "parsed_data": analysis["parsed"]
+                results.append({
+                    "application_id": app.id,
+                    "candidate": app.applicant.username if app.applicant else "N/A",
+                    "candidate_name": app.full_name,
+                    "email": app.email,
+                    "phone": app.phone or "N/A",
+                    "status": app.status,
+                    "applied_date": app.applied_at.strftime("%Y-%m-%d") if hasattr(app, 'applied_at') else "N/A",
+                    "score": analysis["score"],
+                    "parsed_data": analysis["parsed"]
+                })
+            except Exception as e:
+                print(f"Error processing application {app.id}: {str(e)}")
+                # Include with error status
+                results.append({
+                    "application_id": app.id,
+                    "candidate": app.applicant.username if app.applicant else "N/A",
+                    "candidate_name": app.full_name,
+                    "email": app.email,
+                    "phone": app.phone or "N/A",
+                    "status": app.status,
+                    "applied_date": "N/A",
+                    "score": 0.0,
+                    "parsed_data": {
+                        "entities": {},
+                        "method": "error",
+                        "status": f"Error: {str(e)}"
+                    }
+                })
+
+        # Sort by score descending
+        results = sorted(results, key=lambda x: x["score"], reverse=True)
+        
+        return Response({
+            "results": results,
+            "total_applications": len(results),
+            "analyzed": len(results) - skipped,
+            "skipped": skipped,
+            "job_title": job.title,
+            "job_description": job.description
         })
-
-    # Sort by score descending
-    results = sorted(results, key=lambda x: x["score"], reverse=True)
-    return Response({"results": results})
+    
+    except Job.DoesNotExist:
+        return Response(
+            {"error": "Job not found or you don't have permission to view it"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        print(f"Error in resume_dashboard_view: {str(e)}")
+        return Response(
+            {"error": f"An error occurred: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import { 
   Sparkles, 
   Clock, 
@@ -11,7 +14,8 @@ import {
   AlertCircle,
   Loader2,
   Play,
-  ArrowRight
+  ArrowRight,
+  BarChart3
 } from 'lucide-react';
 import { 
   generateQuiz, 
@@ -155,9 +159,26 @@ export default function SecureQuizComponent() {
       );
 
       setQuiz({ ...quiz, isSubmitted: true, result });
-      toast.success(`Quiz completed! You scored ${result.score}%`,{
-        style: { color: 'white', backgroundColor: 'green'}
-      });
+      
+      // Celebrate with confetti for high scores
+      if (result.score >= 80) {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+        toast.success(`🎉 Excellent! You scored ${result.score.toFixed(0)}%!`, {
+          style: { color: 'white', backgroundColor: 'green'}
+        });
+      } else if (result.score >= 70) {
+        toast.success(`✅ Great job! You passed with ${result.score.toFixed(0)}%!`, {
+          style: { color: 'white', backgroundColor: 'green'}
+        });
+      } else {
+        toast.info(`Keep practicing! You scored ${result.score.toFixed(0)}%`, {
+          style: { color: 'white', backgroundColor: 'orange'}
+        });
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to submit quiz',{
         style: { color: 'white', backgroundColor: 'red'}
@@ -372,10 +393,18 @@ export default function SecureQuizComponent() {
           <div className="flex gap-4">
             <button
               onClick={handleRetakeQuiz}
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
             >
+              <Play className="w-5 h-5" />
               Take Another Quiz
             </button>
+            <Link
+              href="/ai_interview/dashboard"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2"
+            >
+              <BarChart3 className="w-5 h-5" />
+              View Dashboard
+            </Link>
           </div>
         </div>
       </div>
