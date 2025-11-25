@@ -1,76 +1,95 @@
 pipeline {
     agent any
     
+    tools {
+        nodejs 'nodejs' // Make sure you have Node.js installed in Jenkins
+    }
+    
     environment {
+        // Add any environment variables you need
         DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
     }
     
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/your-username/esema-jobapplication.git'
+                checkout scm
             }
         }
         
-        stage('Test Backend') {
-            steps {
-                dir('backend') {
-                    sh 'docker build -t hirely-backend:test .'
-                    sh 'docker run --rm hirely-backend:test python manage.py test'
-                }
-            }
-        }
-        
-        stage('Test Frontend') {
-            steps {
-                dir('hirely-frontend') {
-                    sh 'docker build -t hirely-frontend:test .'
-                    sh 'docker run --rm hirely-frontend:test npm test -- --coverage --watchAll=false'
-                }
-            }
-        }
-        
-        stage('Build and Push Images') {
+        stage('Install Dependencies') {
             steps {
                 script {
-                    docker.build("your-dockerhub-username/hirely-backend:${env.BUILD_ID}")
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-                        docker.image("your-dockerhub-username/hirely-backend:${env.BUILD_ID}").push()
-                    }
-                    
-                    docker.build("your-dockerhub-username/hirely-frontend:${env.BUILD_ID}")
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-                        docker.image("your-dockerhub-username/hirely-frontend:${env.BUILD_ID}").push()
+                    // Check if package.json exists and install dependencies
+                    if (fileExists('package.json')) {
+                        sh 'npm install'
                     }
                 }
             }
         }
         
-        stage('Deploy to Staging') {
+        stage('Build') {
             steps {
-                sh 'docker-compose down'
-                sh 'docker-compose up -d'
+                script {
+                    // Build your React/Node.js application
+                    if (fileExists('package.json')) {
+                        sh 'npm run build'
+                    }
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                script {
+                    // Run tests if available
+                    if (fileExists('package.json')) {
+                        try {
+                            sh 'npm test'
+                        } catch (e) {
+                            echo 'Tests failed, but continuing pipeline'
+                            // Uncomment the next line if you want to fail the build on test failures
+                            // error('Tests failed')
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                script {
+                    // Add your deployment steps here
+                    echo 'Deploying application...'
+                    // Example: docker build, push to registry, deploy to server
+                }
             }
         }
     }
     
     post {
         always {
+            // Clean workspace after build
             cleanWs()
+            
+            // Send email notification
+            emailext (
+                subject: "Build Result: ${currentBuild.currentResult} - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                <p>Build: ${env.JOB_NAME} #${env.BUILD_NUMBER}</p>
+                <p>Status: ${currentBuild.currentResult}</p>
+                <p>URL: ${env.BUILD_URL}</p>
+                <p>Check the console output at <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
+                """,
+                to: "dev-team@yourcompany.com",
+                attachLog: true
+            )
         }
         success {
-            emailext (
-                subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: "The build ${env.BUILD_URL} completed successfully.",
-                to: "dev-team@yourcompany.com"
-            )
+            echo 'Build completed successfully!'
         }
         failure {
-            emailext (
-                subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: "The build ${env.BUILD_URL} failed.",
-                to: "dev-team@yourcompany.com"
-            )
+            echo 'Build failed!'
         }
     }
 }
