@@ -6,27 +6,24 @@ pipeline {
     }
     
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 checkout scm
             }
         }
         
-        stage('Install Dependencies') {
+        stage('Install & Build') {
             steps {
                 script {
+                    bat 'node --version'
+                    bat 'npm --version'
+                    
                     if (fileExists('package.json')) {
-                        sh 'npm install'
-                    }
-                }
-            }
-        }
-        
-        stage('Build') {
-            steps {
-                script {
-                    if (fileExists('package.json')) {
-                        sh 'npm run build'
+                        bat 'npm install'
+                        bat 'npm run build'
+                    } else {
+                        echo 'No package.json found. Listing directory contents:'
+                        bat 'dir'
                     }
                 }
             }
@@ -35,9 +32,7 @@ pipeline {
     
     post {
         always {
-            echo "Build completed: ${currentBuild.currentResult}"
-            // Remove email for now until configured
-            // emailext ... 
+            echo "Build finished: ${currentBuild.currentResult}"
         }
     }
 }
