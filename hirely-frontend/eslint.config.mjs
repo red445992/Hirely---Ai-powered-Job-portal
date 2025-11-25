@@ -1,19 +1,15 @@
-// ESLint configuration - DISABLED for development
-// Uncomment below to re-enable ESLint
-
-/*
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
-const eslintConfig = defineConfig([
+export default defineConfig([
   ...nextVitals,
   ...nextTs,
-  
+
   // Global ignores
   globalIgnores([
     ".next/**",
-    "out/**", 
+    "out/**",
     "build/**",
     "next-env.d.ts",
     "node_modules/**",
@@ -22,7 +18,7 @@ const eslintConfig = defineConfig([
     "*.config.ts",
     ".env*",
   ]),
-  
+
   // Custom rules to reduce common errors
   {
     rules: {
@@ -30,12 +26,6 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-explicit-any": "off",
       "react/no-unescaped-entities": "off",
       "react-hooks/exhaustive-deps": "off",
-    }
-  }
+    },
+  },
 ]);
-
-export default eslintConfig;
-*/
-
-// Completely disable ESLint
-export default [];
