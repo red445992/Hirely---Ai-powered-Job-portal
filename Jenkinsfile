@@ -34,5 +34,7 @@ pipeline {
         always {
             echo "Build finished: ${currentBuild.currentResult}"
         }
-    }
-}
+                dir('hirely-frontend') {
+                    if (fileExists('package.json')) {
+                        bat 'npm install'
+                        bat 'npm run build'
