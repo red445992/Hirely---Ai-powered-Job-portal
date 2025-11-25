@@ -1,0 +1,98 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  update-frontend-dependencies:
+    name: Update Frontend Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check for outdated packages
+        working-directory: hirely-frontend
+        run: |
+          npm outdated > outdated.txt || true
+          cat outdated.txt
+
+      - name: Update dependencies
+        working-directory: hirely-frontend
+        run: |
+          npm update
+          npm audit fix
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(deps): update frontend dependencies'
+          title: 'chore(deps): Update Frontend Dependencies'
+          body: |
+            ## Automated Dependency Update
+            
+            This PR updates frontend dependencies to their latest compatible versions.
+            
+            Please review the changes and run tests before merging.
+          branch: deps/frontend-updates
+          labels: dependencies, frontend, automated
+
+  update-backend-dependencies:
+    name: Update Backend Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pip-tools
+        run: pip install pip-tools
+
+      - name: Check for outdated packages
+        working-directory: backend/HirelyBackend
+        run: |
+          pip list --outdated > outdated.txt || true
+          cat outdated.txt
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(deps): check backend dependencies'
+          title: 'chore(deps): Backend Dependencies Update Review'
+          body: |
+            ## Backend Dependency Update Check
+            
+            Please review the outdated packages and update manually if needed.
+            
+            Python dependencies often require careful version management.
+          branch: deps/backend-updates
+          labels: dependencies, backend, automated
+
+  security-updates:
+    name: Security Updates
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Dependabot
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
