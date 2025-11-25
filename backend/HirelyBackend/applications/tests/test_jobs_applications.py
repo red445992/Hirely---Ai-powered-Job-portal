@@ -18,27 +18,27 @@ class TestJobCRUD:
     def test_create_job_as_employer(self, authenticated_client, employer_user):
         """Test employer can create job"""
         data = {
-            'title': 'Senior Backend Developer',
+            'title': 'senior Backend Developer',
             'description': 'We are looking for an experienced backend developer',
             'company': 'Tech Corp',
             'location': 'San Francisco, CA',
-            'category': 'Technology',
-            'level': 'Senior',
-            'salary': '120000-160000',
+            'category': 'programming',
+            'level': 'senior',
+            'salary_display': '$80k-100k',
             'job_type': 'full_time',
             'skills': 'Python, Django, PostgreSQL',
             'requirements': '5+ years experience',
             'responsibilities': 'Develop and maintain backend services'
         }
         
-        response = authenticated_client.post('/api/jobs/addjobs/', data)
+        response = authenticated_client.post('/jobs/addjobs/', data)
         
         assert response.status_code in [status.HTTP_201_CREATED, status.HTTP_200_OK]
-        assert Job.objects.filter(title='Senior Backend Developer').exists()
+        assert Job.objects.filter(title='senior Backend Developer').exists()
     
     def test_list_jobs(self, api_client, sample_job):
         """Test listing jobs is public"""
-        response = api_client.get('/api/jobs/')
+        response = api_client.get('/jobs/public/')
         
         assert response.status_code == status.HTTP_200_OK
         # Check if response contains job data
@@ -50,7 +50,7 @@ class TestJobCRUD:
     
     def test_get_job_detail(self, api_client, sample_job):
         """Test getting job details"""
-        response = api_client.get(f'/api/jobs/{sample_job.id}/')
+        response = api_client.get(f'/jobs/{sample_job.id}/')
         
         assert response.status_code == status.HTTP_200_OK
         assert response.data['title'] == sample_job.title
@@ -59,7 +59,7 @@ class TestJobCRUD:
         """Test employer can update their own job"""
         data = {'title': 'Updated Job Title'}
         
-        response = authenticated_client.patch(f'/api/jobs/{sample_job.id}/', data)
+        response = authenticated_client.patch(f'/jobs/{sample_job.id}/', data)
         
         assert response.status_code == status.HTTP_200_OK
         sample_job.refresh_from_db()
@@ -69,7 +69,7 @@ class TestJobCRUD:
         """Test employer can delete their own job"""
         job_id = sample_job.id
         
-        response = authenticated_client.delete(f'/api/jobs/{job_id}/')
+        response = authenticated_client.delete(f'/jobs/{job_id}/')
         
         assert response.status_code in [status.HTTP_204_NO_CONTENT, status.HTTP_200_OK]
         assert not Job.objects.filter(id=job_id).exists()
@@ -81,12 +81,12 @@ class TestJobCRUD:
             username='other_employer',
             email='other@test.com',
             password='testpass123',
-            is_employer=True
+            user_type='employer'
         )
         api_client.force_authenticate(user=other_employer)
         
         data = {'title': 'Hacked Title'}
-        response = api_client.patch(f'/api/jobs/{sample_job.id}/', data)
+        response = api_client.patch(f'/jobs/{sample_job.id}/', data)
         
         # Should be forbidden or not found
         assert response.status_code in [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND]
@@ -103,7 +103,7 @@ class TestJobValidation:
             # Missing description, company, location, etc.
         }
         
-        response = authenticated_client.post('/api/jobs/addjobs/', data)
+        response = authenticated_client.post('/jobs/addjobs/', data)
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
     
@@ -114,13 +114,13 @@ class TestJobValidation:
             'description': 'Test description',
             'company': 'Test Company',
             'location': 'Remote',
-            'category': 'Technology',
+            'category': 'programming',
             'level': 'InvalidLevel',  # Invalid
-            'salary': '80000-100000',
+            'salary_display': '$80k-100k',
             'job_type': 'full_time'
         }
         
-        response = authenticated_client.post('/api/jobs/addjobs/', data)
+        response = authenticated_client.post('/jobs/addjobs/', data)
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -142,7 +142,7 @@ class TestApplicationFlow:
             'availability': 'immediately'
         }
         
-        response = api_client.post('/api/applications/apply/', data)
+        response = api_client.post('/applications/apply/', data)
         
         assert response.status_code in [status.HTTP_201_CREATED, status.HTTP_200_OK]
         assert Application.objects.filter(
@@ -161,7 +161,7 @@ class TestApplicationFlow:
             'phone': '+1234567890'
         }
         
-        response = api_client.post('/api/applications/apply/', data)
+        response = api_client.post('/applications/apply/', data)
         
         # Should prevent duplicate
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -170,13 +170,13 @@ class TestApplicationFlow:
         """Test candidate can view their applications"""
         api_client.force_authenticate(user=candidate_user)
         
-        response = api_client.get('/api/applications/my-applications/')
+        response = api_client.get('/applications/my-applications/')
         
         assert response.status_code == status.HTTP_200_OK
     
     def test_employer_view_job_applications(self, authenticated_client, sample_job, sample_application):
         """Test employer can view applications for their job"""
-        response = authenticated_client.get(f'/api/applications/job/{sample_job.id}/applications/')
+        response = authenticated_client.get(f'/applications/job/{sample_job.id}/')
         
         assert response.status_code == status.HTTP_200_OK
 
@@ -190,7 +190,7 @@ class TestApplicationStatus:
         data = {'status': 'reviewing'}
         
         response = authenticated_client.patch(
-            f'/api/applications/{sample_application.id}/update-status/',
+            f'/applications/{sample_application.id}/',
             data
         )
         
@@ -205,7 +205,7 @@ class TestApplicationStatus:
         
         data = {'status': 'accepted'}
         response = api_client.patch(
-            f'/api/applications/{sample_application.id}/update-status/',
+            f'/applications/{sample_application.id}/',
             data
         )
         
@@ -217,21 +217,21 @@ class TestApplicationStatus:
 class TestJobFiltering:
     """Test job filtering and search"""
     
-    def test_filter_by_category(self, api_client, multiple_jobs):
+    def test_filter_by_category(self, api_client, sample_job):
         """Test filtering jobs by category"""
-        response = api_client.get('/api/jobs/?category=Technology')
+        response = api_client.get('/jobs/public/?category=programming')
         
         assert response.status_code == status.HTTP_200_OK
     
     def test_filter_by_location(self, api_client, sample_job):
         """Test filtering jobs by location"""
-        response = api_client.get(f'/api/jobs/?location={sample_job.location}')
+        response = api_client.get(f'/jobs/public/?location={sample_job.location}')
         
         assert response.status_code == status.HTTP_200_OK
     
     def test_search_jobs(self, api_client, sample_job):
         """Test searching jobs by keyword"""
-        response = api_client.get('/api/jobs/?search=Python')
+        response = api_client.get('/jobs/search/?search=Python')
         
         assert response.status_code == status.HTTP_200_OK
 
@@ -248,9 +248,9 @@ class TestJobModel:
             description='Test description',
             company='Test Company',
             location='Remote',
-            category='Technology',
-            level='Mid',
-            salary='80000-100000',
+            category='programming',
+            level='mid',
+            salary_display='$80k-100k',
             job_type='full_time'
         )
         

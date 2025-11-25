@@ -1,0 +1,166 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, dev, QA]
+    paths:
+      - 'hirely-frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - 'hirely-frontend/**'
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: hirely-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: hirely-frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: hirely-frontend
+        run: npm run lint:check
+
+      - name: Run Type Check
+        working-directory: hirely-frontend
+        run: npm run type-check
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: hirely-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: hirely-frontend
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: hirely-frontend
+        run: npm run test:run
+
+      - name: Generate coverage report
+        working-directory: hirely-frontend
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./hirely-frontend/coverage/coverage-final.json
+          flags: frontend-unit
+          name: frontend-unit-tests
+          fail_ci_if_error: false
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: hirely-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: hirely-frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: hirely-frontend
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        working-directory: hirely-frontend
+        run: npm run test:e2e
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: hirely-frontend/playwright-report/
+          retention-days: 30
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: hirely-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: hirely-frontend
+        run: npm ci
+
+      - name: Build application
+        working-directory: hirely-frontend
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: hirely-frontend/.next/
+          retention-days: 7
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run npm audit
+        working-directory: hirely-frontend
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=hirely-frontend/package.json

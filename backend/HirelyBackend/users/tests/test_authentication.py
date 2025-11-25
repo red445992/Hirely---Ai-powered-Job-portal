@@ -20,7 +20,7 @@ class TestUserRegistration:
             'username': 'newcandidate',
             'email': 'candidate@example.com',
             'password': 'SecurePass123!',
-            'password2': 'SecurePass123!',
+            'confirm_password': 'SecurePass123!',
             'first_name': 'John',
             'last_name': 'Doe',
             'user_type': 'candidate'
@@ -30,7 +30,8 @@ class TestUserRegistration:
         
         assert response.status_code == status.HTTP_201_CREATED
         assert User.objects.filter(username='newcandidate').exists()
-        assert 'access' in response.data or 'token' in response.data
+        assert 'tokens' in response.data
+        assert 'access' in response.data['tokens']
     
     def test_register_employer_success(self, api_client):
         """Test successful employer registration"""
@@ -38,7 +39,7 @@ class TestUserRegistration:
             'username': 'newemployer',
             'email': 'employer@example.com',
             'password': 'SecurePass123!',
-            'password2': 'SecurePass123!',
+            'confirm_password': 'SecurePass123!',
             'first_name': 'Jane',
             'last_name': 'Smith',
             'user_type': 'employer'
@@ -56,7 +57,7 @@ class TestUserRegistration:
             'username': 'candidate_test',  # Already exists in fixture
             'email': 'new@example.com',
             'password': 'SecurePass123!',
-            'password2': 'SecurePass123!',
+            'confirm_password': 'SecurePass123!',
             'user_type': 'candidate'
         }
         
@@ -70,7 +71,7 @@ class TestUserRegistration:
             'username': 'newuser',
             'email': 'candidate@test.com',  # Already exists
             'password': 'SecurePass123!',
-            'password2': 'SecurePass123!',
+            'confirm_password': 'SecurePass123!',
             'user_type': 'candidate'
         }
         
@@ -84,7 +85,7 @@ class TestUserRegistration:
             'username': 'newuser',
             'email': 'user@example.com',
             'password': 'SecurePass123!',
-            'password2': 'DifferentPass123!',
+            'confirm_password': 'DifferentPass123!',
             'user_type': 'candidate'
         }
         
@@ -98,7 +99,7 @@ class TestUserRegistration:
             'username': 'newuser',
             'email': 'user@example.com',
             'password': '123',
-            'password2': '123',
+            'confirm_password': '123',
             'user_type': 'candidate'
         }
         
@@ -123,17 +124,17 @@ class TestUserLogin:
     """Test user login endpoint"""
     
     def test_login_success_with_username(self, api_client, candidate_user):
-        """Test successful login with username"""
+        """Test successful login with email (API requires email, not username)"""
         data = {
-            'username': 'candidate_test',
+            'email': 'candidate@test.com',
             'password': 'testpass123'
         }
         
         response = api_client.post('/accounts/login/', data)
         
         assert response.status_code == status.HTTP_200_OK
-        assert 'access' in response.data or 'token' in response.data
-        assert 'refresh' in response.data or 'user' in response.data
+        assert 'tokens' in response.data
+        assert 'access' in response.data['tokens']
     
     def test_login_success_with_email(self, api_client, candidate_user):
         """Test successful login with email"""
@@ -149,7 +150,7 @@ class TestUserLogin:
     def test_login_wrong_password(self, api_client, candidate_user):
         """Test login with wrong password fails"""
         data = {
-            'username': 'candidate_test',
+            'email': 'candidate@test.com',
             'password': 'wrongpassword'
         }
         
@@ -160,7 +161,7 @@ class TestUserLogin:
     def test_login_nonexistent_user(self, api_client):
         """Test login with non-existent user fails"""
         data = {
-            'username': 'nonexistent',
+            'email': 'nonexistent@test.com',
             'password': 'testpass123'
         }
         
@@ -185,31 +186,35 @@ class TestJWTTokens:
         """Test that access token grants access to protected endpoints"""
         # Login to get token
         login_data = {
-            'username': 'candidate_test',
+            'email': 'candidate@test.com',
             'password': 'testpass123'
         }
         login_response = api_client.post('/accounts/login/', login_data)
         
         assert login_response.status_code == status.HTTP_200_OK
-        token = login_response.data.get('access') or login_response.data.get('token')
+        # Extract token from nested structure
+        if 'tokens' in login_response.data:
+            token = login_response.data['tokens']['access']
+        else:
+            token = login_response.data.get('access') or login_response.data.get('token')
         
         # Use token to access protected endpoint
         api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
-        response = api_client.get('/api/applications/my-applications/')
+        response = api_client.get('/applications/my-applications/')
         
         # Should not return 401 Unauthorized
         assert response.status_code != status.HTTP_401_UNAUTHORIZED
     
     def test_access_protected_without_token(self, api_client):
         """Test that protected endpoints reject requests without token"""
-        response = api_client.get('/api/applications/my-applications/')
+        response = api_client.get('/applications/my-applications/')
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
     
     def test_access_protected_with_invalid_token(self, api_client):
         """Test that protected endpoints reject invalid tokens"""
         api_client.credentials(HTTP_AUTHORIZATION='Bearer invalid_token_123')
-        response = api_client.get('/api/applications/my-applications/')
+        response = api_client.get('/applications/my-applications/')
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
     
@@ -217,7 +222,7 @@ class TestJWTTokens:
         """Test that refresh token can generate new access token"""
         # Login to get tokens
         login_data = {
-            'username': 'candidate_test',
+            'email': 'candidate@test.com',
             'password': 'testpass123'
         }
         login_response = api_client.post('/accounts/login/', login_data)
@@ -244,13 +249,12 @@ class TestUserPermissions:
             'description': 'Test job description',
             'company': 'Test Company',
             'location': 'Remote',
-            'category': 'Technology',
-            'level': 'Mid',
-            'salary': '80000-100000',
+            'category': 'programming',
+            'level': 'mid',
             'job_type': 'full_time'
         }
         
-        response = authenticated_client.post('/api/jobs/addjobs/', data)
+        response = authenticated_client.post('/jobs/addjobs/', data)
         
         assert response.status_code in [status.HTTP_201_CREATED, status.HTTP_200_OK]
     
@@ -269,7 +273,7 @@ class TestUserPermissions:
             'job_type': 'full_time'
         }
         
-        response = api_client.post('/api/jobs/addjobs/', data)
+        response = api_client.post('/jobs/addjobs/', data)
         
         # Should be forbidden or unauthorized
         assert response.status_code in [status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED, status.HTTP_400_BAD_REQUEST]
@@ -278,7 +282,7 @@ class TestUserPermissions:
         """Test that users can only see their own applications"""
         api_client.force_authenticate(user=candidate_user)
         
-        response = api_client.get('/api/applications/my-applications/')
+        response = api_client.get('/applications/my-applications/')
         
         assert response.status_code == status.HTTP_200_OK
         # Verify response contains their applications
@@ -323,4 +327,5 @@ class TestUserModel:
     
     def test_user_string_representation(self, candidate_user):
         """Test user __str__ method"""
-        assert str(candidate_user) == 'candidate_test' or candidate_user.email in str(candidate_user)
+        user_str = str(candidate_user)
+        assert 'candidate_test' in user_str and 'Candidate' in user_str

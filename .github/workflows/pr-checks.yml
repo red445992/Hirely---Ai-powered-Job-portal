@@ -1,0 +1,168 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'hirely-frontend/**'
+            backend:
+              - 'backend/**'
+
+  frontend-checks:
+    name: Frontend Checks
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: hirely-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: hirely-frontend
+        run: npm ci
+
+      - name: Run all checks
+        working-directory: hirely-frontend
+        run: |
+          npm run lint:check
+          npm run type-check
+          npm run test:run
+          npm run build
+
+  backend-checks:
+    name: Backend Checks
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: hirely_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: backend/HirelyBackend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install black isort flake8
+
+      - name: Run all checks
+        working-directory: backend/HirelyBackend
+        run: |
+          black --check .
+          isort --check-only .
+          flake8 .
+          python manage.py test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hirely_test
+          SECRET_KEY: test-secret-key
+          DEBUG: False
+
+  pr-size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check PR size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const additions = pr.additions;
+            const deletions = pr.deletions;
+            const total = additions + deletions;
+            
+            if (total > 1000) {
+              core.setFailed(`PR is too large (${total} lines changed). Please consider breaking it into smaller PRs.`);
+            } else if (total > 500) {
+              core.warning(`PR is quite large (${total} lines changed). Consider breaking it into smaller PRs.`);
+            }
+
+  pr-labels:
+    name: Check PR Labels
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const labels = pr.labels.map(l => l.name);
+            
+            const requiredLabels = ['frontend', 'backend', 'bugfix', 'feature', 'enhancement', 'documentation'];
+            const hasLabel = requiredLabels.some(label => labels.includes(label));
+            
+            if (!hasLabel) {
+              core.setFailed('PR must have at least one label: ' + requiredLabels.join(', '));
+            }
+
+  comment-on-pr:
+    name: Comment on PR
+    runs-on: ubuntu-latest
+    needs: [frontend-checks, backend-checks]
+    if: always()
+    
+    steps:
+      - name: Comment test results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const frontendStatus = '${{ needs.frontend-checks.result }}';
+            const backendStatus = '${{ needs.backend-checks.result }}';
+            
+            let message = '## PR Checks Summary\n\n';
+            message += `- Frontend: ${frontendStatus === 'success' ? '✅' : frontendStatus === 'skipped' ? '⏭️' : '❌'}\n`;
+            message += `- Backend: ${backendStatus === 'success' ? '✅' : backendStatus === 'skipped' ? '⏭️' : '❌'}\n`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });

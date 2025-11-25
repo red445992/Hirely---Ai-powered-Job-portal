@@ -2,11 +2,20 @@
 
 A modern full-stack job portal with AI-powered features including resume scoring, AI interviews, and intelligent candidate matching.
 
+## Badges
+
 ![Django](https://img.shields.io/badge/Django-5.2.7-green)
 ![Next.js](https://img.shields.io/badge/Next.js-16.0.0-black)
 ![React](https://img.shields.io/badge/React-19.2.0-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
 ![Python](https://img.shields.io/badge/Python-3.12-yellow)
+
+### CI/CD Status
+
+[![Frontend CI](https://github.com/red445992/Hirely---Ai-powered-Job-portal/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/red445992/Hirely---Ai-powered-Job-portal/actions/workflows/frontend-ci.yml)
+[![Backend CI](https://github.com/red445992/Hirely---Ai-powered-Job-portal/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/red445992/Hirely---Ai-powered-Job-portal/actions/workflows/backend-ci.yml)
+[![Deploy Production](https://github.com/red445992/Hirely---Ai-powered-Job-portal/actions/workflows/deploy-production.yml/badge.svg)](https://github.com/red445992/Hirely---Ai-powered-Job-portal/actions/workflows/deploy-production.yml)
+[![CodeQL](https://github.com/red445992/Hirely---Ai-powered-Job-portal/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/red445992/Hirely---Ai-powered-Job-portal/actions/workflows/codeql-analysis.yml)
 
 ---
 
